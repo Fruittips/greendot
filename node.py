@@ -5,7 +5,12 @@ import ustruct
 import umqtt.simple
 import time
 import ubinascii
-import urandom
+import uos
+
+# wifi_ssid = "Mah iPhone"
+# wifi_pass = "THEMAHYIDA"
+wifi_ssid = "skku"
+wifi_pass = "skku1398"
 
 class BTNode:
     def __init__(self):
@@ -17,7 +22,7 @@ class BTNode:
         self.uuid = self._generate_uuid()
         
     def _generate_uuid(self):
-        random_bytes = urandom.urandom(16)  # Generate 16 random bytes
+        random_bytes = uos.urandom(16)  # Generate 16 random bytes
         uuid = ubinascii.hexlify(random_bytes)  # Convert bytes to hexadecimal
         return uuid
 
@@ -61,14 +66,28 @@ class Node:
         self.flame_sensor = machine.ADC(machine.Pin(34))
         self.wifi = network.WLAN(network.STA_IF)
         self.wifi.active(True)
-        self.mqtt_client = umqtt.simple.MQTTClient("node", "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.coms")
         self.bt_node = BTNode()
+        self._connect_mqtt()
+        self._connect_wifi()
     
-    def connect_wifi(self):
-        self.wifi.connect('skku', 'skku1398')
+    def _connect_wifi(self):
+        self.wifi.connect(wifi_ssid, wifi_pass)
         while not self.wifi.isconnected():
-            time.sleep(1)
-        self.mqtt_client.connect()
+            print("connecting to Wifi...")
+            time.sleep(5)
+            break
+        print("Wifi connected", self.wifi.isconnected())
+       
+    def _connect_mqtt(self):
+        with open("device.crt", 'r') as f:
+            DEVICE_CERT = f.read()
+        with open("private.key", 'r') as f:
+            PRIVATE_KEY = f.read()
+        ssl_params = {"key":PRIVATE_KEY, "cert":DEVICE_CERT, "server_side":False}
+        try:
+            self.mqtt_client = umqtt.simple.MQTTClient("node", "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.coms", port=8883, keepalive=1200, ssl=True, ssl_params=ssl_params)
+        except:
+            print("error connecting to mqtt broker")
     
     def read_sensors(self):
         return [sensor.read() for sensor in self.sensors]
@@ -77,19 +96,22 @@ class Node:
         self.mqtt_client.publish("fire/data", data)
     
     def start(self):
-        self.connect_wifi()
-        self.bt_node.advertise()
-        while True:
-            if self.wifi.isconnected():
-                data = self.read_sensors()
-                self.send_data(str(data))
-                bt_message = self.bt_node.process_buffer()
-                if bt_message:
-                    self.send_data(bt_message)
-            else:
+        print("starting")
+        self.mqtt_client.publish("test/test", "hello word")
+        # self.connect_wifi()
+       # self.bt_node.advertise()
+      #  while True:
+     #       if self.wifi.isconnected():
+#                data = self.read_sensors()
+#                self.send_data(str(data))
+#                bt_message = self.bt_node.process_buffer()
+#                if bt_message:
+ #                   self.send_data(bt_message)
+  #          else:
                 # Assume a simple function to send data to another node via Bluetooth
-                for conn_handle, _ in self.bt_node.connected_nodes:
-                    self.bt_node.send_data(conn_handle, str(self.read_sensors()))
+   #             for conn_handle, _ in self.bt_node.connected_nodes:
+    #                self.bt_node.send_data(conn_handle, str(self.read_sensors()))
 
+print("Hello world")
 node = Node()
 node.start()
