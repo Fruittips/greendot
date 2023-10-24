@@ -11,6 +11,7 @@ import uos
 # wifi_pass = "THEMAHYIDA"
 wifi_ssid = "skku"
 wifi_pass = "skku1398"
+MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
 
 class BTNode:
     def __init__(self):
@@ -61,15 +62,16 @@ class BTNode:
 
 class Node:
     def __init__(self):
+        self.client_id = "NODE-1"
         self.dht_sensor = machine.ADC(machine.Pin(32))
         self.air_quality_sensor = machine.ADC(machine.Pin(35))
         self.flame_sensor = machine.ADC(machine.Pin(34))
         self.wifi = network.WLAN(network.STA_IF)
         self.wifi.active(True)
         self.bt_node = BTNode()
-        self._connect_mqtt()
         self._connect_wifi()
-    
+        self._connect_mqtt()
+
     def _connect_wifi(self):
         self.wifi.connect(wifi_ssid, wifi_pass)
         while not self.wifi.isconnected():
@@ -85,7 +87,17 @@ class Node:
             PRIVATE_KEY = f.read()
         ssl_params = {"key":PRIVATE_KEY, "cert":DEVICE_CERT, "server_side":False}
         try:
-            self.mqtt_client = umqtt.simple.MQTTClient("node", "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.coms", port=8883, keepalive=1200, ssl=True, ssl_params=ssl_params)
+            self.mqtt_client = umqtt.simple.MQTTClient(
+                client_id=self.client_id,
+                server= MQTT_BROKER_ENDPOINT,
+                port=8883,
+                keepalive=1500, 
+                ssl=True,
+                ssl_params=ssl_params
+            )
+            self.mqtt_client.connect()
+            self.mqtt_client.set_callback(self._sub_callback)
+            print("connected to mqtt broker")
         except:
             print("error connecting to mqtt broker")
     
@@ -97,20 +109,25 @@ class Node:
     
     def start(self):
         print("starting")
-        self.mqtt_client.publish("test/test", "hello word")
-        # self.connect_wifi()
-       # self.bt_node.advertise()
-      #  while True:
-     #       if self.wifi.isconnected():
-#                data = self.read_sensors()
-#                self.send_data(str(data))
-#                bt_message = self.bt_node.process_buffer()
-#                if bt_message:
- #                   self.send_data(bt_message)
-  #          else:
-                # Assume a simple function to send data to another node via Bluetooth
-   #             for conn_handle, _ in self.bt_node.connected_nodes:
-    #                self.bt_node.send_data(conn_handle, str(self.read_sensors()))
+
+        self.bt_node.advertise()
+        start_time = time.time()
+        while True:
+        #    if self.wifi.isconnected():
+        #        data = self.read_sensors()
+        #        self.send_data(str(data))
+        #        bt_message = self.bt_node.process_buffer()
+        #        if bt_message:
+        #            self.send_data(bt_message)
+        #    else:
+        #        for conn_handle, _ in self.bt_node.connected_nodes:
+        #            self.bt_node.send_data(conn_handle, str(self.read_sensors()))
+            print(self.bt_node.connected_nodes)
+            time.sleep(3)
+            elapsed_time = time.time() - start_time  # Calculate elapsed time
+            if elapsed_time >= 10:  # Check if 30 seconds
+                print("30 seconds elapsed, exiting loop.")
+                break
 
 print("Hello world")
 node = Node()
