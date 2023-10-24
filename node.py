@@ -7,6 +7,38 @@ import time
 import ubinascii
 import uos
 
+from micropython import const
+_IRQ_CENTRAL_CONNECT = const(1)
+_IRQ_CENTRAL_DISCONNECT = const(2)
+_IRQ_GATTS_WRITE = const(3)
+_IRQ_GATTS_READ_REQUEST = const(4)
+_IRQ_SCAN_RESULT = const(5)
+_IRQ_SCAN_DONE = const(6)
+_IRQ_PERIPHERAL_CONNECT = const(7)
+_IRQ_PERIPHERAL_DISCONNECT = const(8)
+_IRQ_GATTC_SERVICE_RESULT = const(9)
+_IRQ_GATTC_SERVICE_DONE = const(10)
+_IRQ_GATTC_CHARACTERISTIC_RESULT = const(11)
+_IRQ_GATTC_CHARACTERISTIC_DONE = const(12)
+_IRQ_GATTC_DESCRIPTOR_RESULT = const(13)
+_IRQ_GATTC_DESCRIPTOR_DONE = const(14)
+_IRQ_GATTC_READ_RESULT = const(15)
+_IRQ_GATTC_READ_DONE = const(16)
+_IRQ_GATTC_WRITE_DONE = const(17)
+_IRQ_GATTC_NOTIFY = const(18)
+_IRQ_GATTC_INDICATE = const(19)
+_IRQ_GATTS_INDICATE_DONE = const(20)
+_IRQ_MTU_EXCHANGED = const(21)
+_IRQ_L2CAP_ACCEPT = const(22)
+_IRQ_L2CAP_CONNECT = const(23)
+_IRQ_L2CAP_DISCONNECT = const(24)
+_IRQ_L2CAP_RECV = const(25)
+_IRQ_L2CAP_SEND_READY = const(26)
+_IRQ_CONNECTION_UPDATE = const(27)
+_IRQ_ENCRYPTION_UPDATE = const(28)
+_IRQ_GET_SECRET = const(29)
+_IRQ_SET_SECRET = const(30)
+
 # wifi_ssid = "Mah iPhone"
 # wifi_pass = "THEMAHYIDA"
 wifi_ssid = "skku"
@@ -30,25 +62,25 @@ class BTNode:
         self.bt.gap_scan(20000, 30000, 30000)  # scan for 20 seconds
 
     def bt_irq(self, event, data):
-        # Event handler for Bluetooth events
-        if event == ubluetooth.EVT_GAP_SCAN_RESULT:
-            adv_type, adv_data, addr_type, addr, adv_rssi = data
+        if event == _IRQ_SCAN_RESULT:
+            addr_type, addr, adv_type, rssi, adv_data = data
             if self.uuid in adv_data:
                 self.bt.gap_connect(addr_type, addr)
-        elif event == ubluetooth.EVT_GAP_SCAN_COMPLETE:
+        elif event == _IRQ_SCAN_DONE:
             print("Scan complete")
-        elif event == ubluetooth.EVT_GAP_CONNECT:
-            # A device connected to us
+        elif event == _IRQ_PERIPHERAL_CONNECT:
+            # A successful gap_connect().
             conn_handle, addr_type, addr = data
             self.connected_nodes.append((conn_handle, addr))
-        elif event == ubluetooth.EVT_GAP_DISCONNECT:
-            # A device disconnected from us
+        elif event == _IRQ_PERIPHERAL_DISCONNECT:
+            # Connected peripheral has disconnected.
             conn_handle, addr_type, addr = data
             self.connected_nodes.remove((conn_handle, addr))
-        elif event == ubluetooth.EVT_GATTS_WRITE:
-            # A device wrote to us, assume it's sensor data
-            conn_handle, value_handle, = data
-            self.buffer += self.bt.gatts_read(value_handle)
+        elif event == _IRQ_GATTS_WRITE:
+            # A client has written to this characteristic or descriptor.
+            conn_handle, attr_handle = data
+            self.buffer += self.bt.gatts_read(attr_handle)
+
 
     def advertise(self):
         adv_data = bytearray([
@@ -122,7 +154,8 @@ class Node:
     def start(self):
         print("starting")
 
-        self.bt_node.advertise()
+        # self.bt_node.advertise()
+        self.bt_node.scan_and_connect()
         start_time = time.time()
         while True:
         #    if self.wifi.isconnected():
