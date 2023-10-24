@@ -26,10 +26,18 @@ class BTNode:
         random_bytes = uos.urandom(16)  # Generate 16 random bytes
         uuid = ubinascii.hexlify(random_bytes)  # Convert bytes to hexadecimal
         return uuid
+    def scan_and_connect(self):
+        self.bt.gap_scan(20000, 30000, 30000)  # scan for 20 seconds
 
     def bt_irq(self, event, data):
         # Event handler for Bluetooth events
-        if event == ubluetooth.EVT_GAP_CONNECT:
+        if event == ubluetooth.EVT_GAP_SCAN_RESULT:
+            adv_type, adv_data, addr_type, addr, adv_rssi = data
+            if self.uuid in adv_data:
+                self.bt.gap_connect(addr_type, addr)
+        elif event == ubluetooth.EVT_GAP_SCAN_COMPLETE:
+            print("Scan complete")
+        elif event == ubluetooth.EVT_GAP_CONNECT:
             # A device connected to us
             conn_handle, addr_type, addr = data
             self.connected_nodes.append((conn_handle, addr))
@@ -43,9 +51,13 @@ class BTNode:
             self.buffer += self.bt.gatts_read(value_handle)
 
     def advertise(self):
-        uuid_bytes = bytes.fromhex(self.uuid.decode('utf-8'))
-        adv_payload = b'\x02\x01\x06\x11\x06' + uuid_bytes
-        self.bt.gap_advertise(100, adv_payload)
+        adv_data = bytearray([
+            0x02, 0x01, 0x06,  # Flags
+            0x11, 0x07  # 128-bit UUID
+        ]) + self.uuid
+        # uuid_bytes = bytes.fromhex(self.uuid.decode('utf-8'))
+        # adv_payload = b'\x02\x01\x06\x11\x06' + uuid_bytes
+        self.bt.gap_advertise(100, adv_data)
 
     def send_data(self, conn_handle, data):
         # Send data to a connected node
