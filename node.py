@@ -1,43 +1,18 @@
 import machine
 import network
-import ubluetooth
+import bluetooth
 import ustruct
 import umqtt.simple
 import time
 import ubinascii
 import uos
-
 from micropython import const
-_IRQ_CENTRAL_CONNECT = const(1)
-_IRQ_CENTRAL_DISCONNECT = const(2)
-_IRQ_GATTS_WRITE = const(3)
-_IRQ_GATTS_READ_REQUEST = const(4)
-_IRQ_SCAN_RESULT = const(5)
-_IRQ_SCAN_DONE = const(6)
-_IRQ_PERIPHERAL_CONNECT = const(7)
-_IRQ_PERIPHERAL_DISCONNECT = const(8)
-_IRQ_GATTC_SERVICE_RESULT = const(9)
-_IRQ_GATTC_SERVICE_DONE = const(10)
-_IRQ_GATTC_CHARACTERISTIC_RESULT = const(11)
-_IRQ_GATTC_CHARACTERISTIC_DONE = const(12)
-_IRQ_GATTC_DESCRIPTOR_RESULT = const(13)
-_IRQ_GATTC_DESCRIPTOR_DONE = const(14)
-_IRQ_GATTC_READ_RESULT = const(15)
-_IRQ_GATTC_READ_DONE = const(16)
-_IRQ_GATTC_WRITE_DONE = const(17)
-_IRQ_GATTC_NOTIFY = const(18)
-_IRQ_GATTC_INDICATE = const(19)
-_IRQ_GATTS_INDICATE_DONE = const(20)
-_IRQ_MTU_EXCHANGED = const(21)
-_IRQ_L2CAP_ACCEPT = const(22)
-_IRQ_L2CAP_CONNECT = const(23)
-_IRQ_L2CAP_DISCONNECT = const(24)
-_IRQ_L2CAP_RECV = const(25)
-_IRQ_L2CAP_SEND_READY = const(26)
-_IRQ_CONNECTION_UPDATE = const(27)
-_IRQ_ENCRYPTION_UPDATE = const(28)
-_IRQ_GET_SECRET = const(29)
-_IRQ_SET_SECRET = const(30)
+import uasyncio as asyncio
+import aioble
+
+import random
+import struct
+
 
 # wifi_ssid = "Mah iPhone"
 # wifi_pass = "THEMAHYIDA"
@@ -45,76 +20,130 @@ wifi_ssid = "skku"
 wifi_pass = "skku1398"
 MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
 
+
+_GREENDOT_SERVICE_UUID = bluetooth.UUID(0x181A)
+
+_FLAME_SENSOR_UUID = bluetooth.UUID(0x2A6A)
+_TEMP_SENSOR_UUID = bluetooth.UUID(0x2A6B)
+_AIR_SENSOR_UUID = bluetooth.UUID(0x2A6C)
+
+_ADV_INTERVAL_MS = 250_000
+_READ_INTERVAL_MS = 2000
+
+_DEVICE_NAME_PREFIX = "GREENDOT-"
+_DEVICE_NAME = _DEVICE_NAME_PREFIX + "-NODE-1"
+
+
 class BTNode:
     def __init__(self):
-        self.bt = ubluetooth.BLE()
-        self.bt.active(True)
-        self.bt.irq(self.bt_irq)
-        self.connected_nodes = []
-        self.buffer = b''
-        self.uuid = self._generate_uuid()
+        self.device = None
+        self.connection = None
+        self.greendot_service = None
+        self.temp_characteristic = None
+        self.flame_characteristic = None
+        self.air_characteristic = None
         
-    def _generate_uuid(self):
-        random_bytes = uos.urandom(16)  # Generate 16 random bytes
-        uuid = ubinascii.hexlify(random_bytes)  # Convert bytes to hexadecimal
-        return uuid
-    def scan_and_connect(self):
-        self.bt.gap_scan(20000, 30000, 30000)  # scan for 20 seconds
+    async def act_as_central(self):
+        await self.__scan_for_nodes()
+        print("Found device, connecting...")
+        await self.__connect_to_node()
+        print("Connected, recieving data...")
+        while True:
+            await self.__recieve()
+            await asyncio.sleep_ms(_READ_INTERVAL_MS)
+    
+    async def act_as_peripheral(self):
+        greendot_service = aioble.Service(_GREENDOT_SERVICE_UUID)
+        self.temp_characteristic = aioble.Characteristic(greendot_service, _TEMP_SENSOR_UUID, read=True, notify=True)
+        self.flame_characteristic = aioble.Characteristic(greendot_service, _FLAME_SENSOR_UUID, read=True, notify=True)
+        self.air_characteristic = aioble.Characteristic(greendot_service, _AIR_SENSOR_UUID, read=True, notify=True)
 
-    def bt_irq(self, event, data):
-        if event == _IRQ_SCAN_RESULT:
-            addr_type, addr, adv_type, rssi, adv_data = data
-            if self.uuid in adv_data:
-                self.bt.gap_connect(addr_type, addr)
-        elif event == _IRQ_SCAN_DONE:
-            print("Scan complete")
-        elif event == _IRQ_PERIPHERAL_CONNECT:
-            # A successful gap_connect().
-            conn_handle, addr_type, addr = data
-            self.connected_nodes.append((conn_handle, addr))
-        elif event == _IRQ_PERIPHERAL_DISCONNECT:
-            # Connected peripheral has disconnected.
-            conn_handle, addr_type, addr = data
-            self.connected_nodes.remove((conn_handle, addr))
-        elif event == _IRQ_GATTS_WRITE:
-            # A client has written to this characteristic or descriptor.
-            conn_handle, attr_handle = data
-            self.buffer += self.bt.gatts_read(attr_handle)
+        aioble.register_services(greendot_service)
+        adv = asyncio.create_task(self.__advertise())
+        send_data = asyncio.create_task(self.__send_sensor_data())
+        await asyncio.gather(adv,send_data)
+        return
+    
+    async def __scan_for_nodes(self):
+        # Scan for 5 seconds, in active mode, with very low interval/window (to
+        # maximise detection rate).
+        async with aioble.scan(5000, interval_us=30000, window_us=30000, active=True) as scanner:
+            async for result in scanner:
+                # See if it matches our name and the environmental sensing service.
+                if _DEVICE_NAME_PREFIX in result.name() and _GREENDOT_SERVICE_UUID in result.services():
+                    self.device = result.device
+        return None
+    
+    async def __connect_to_node(self):
+        if self.device is None:
+            print("No device found")
+            return
+        try:
+            connection = await self.device.connect()
+            self.connection = connection
+            temp_service = await self.connection.service(_GREENDOT_SERVICE_UUID)
+            self.temp_characteristic = await temp_service.characteristic(_TEMP_SENSOR_UUID)
+            self.flame_characteristic = await temp_service.characteristic(_FLAME_SENSOR_UUID)
+            self.air_characteristic = await temp_service.characteristic(_AIR_SENSOR_UUID)
+        except asyncio.TimeoutError:
+            print("Timeout during connection")
+            return
+        
+    async def __recieve(self):
+        if self.connection is None:
+            print("Connection failed")
+            return
+        if self.air_characteristic is None:
+            print("Air characteristic not found")
+            return
+        if self.temp_characteristic is None:
+            print("Temp characteristic not found")
+            return
+        if self.flame_characteristic is None:
+            print("Flame characteristic not found")
+            return
+        temp = self.__decode_data(await self.temp_characteristic.read())
+        flame = self.__decode_data(await self.flame_characteristic.read())
+        air = self.__decode_data(await self.air_characteristic.read())
+        return temp, flame, air
+    
+    async def __advertise(self):
+        while True:
+            async with await aioble.advertise(
+                _ADV_INTERVAL_MS,
+                name=_DEVICE_NAME,
+                services=[_GREENDOT_SERVICE_UUID],
+            ) as connection:
+                print("Connection from", connection.device)
+                await connection.disconnected()
+    
+    async def __send_sensor_data(self):
+        while True:
+            temp_sensor_data = 1
+            flame_sensor_data = 2
+            air_sensor_data = 3
+            self.temp_characteristic.write(self.__encode_data(temp_sensor_data))
+            self.flame_characteristic.write(self.__encode_data(flame_sensor_data))
+            self.air_characteristic.write(self.__encode_data(air_sensor_data))
+            await asyncio.sleep_ms(1000)
 
-
-    def advertise(self):
-        adv_data = bytearray([
-            0x02, 0x01, 0x06,  # Flags
-            0x11, 0x07  # 128-bit UUID
-        ]) + self.uuid
-        # uuid_bytes = bytes.fromhex(self.uuid.decode('utf-8'))
-        # adv_payload = b'\x02\x01\x06\x11\x06' + uuid_bytes
-        self.bt.gap_advertise(100, adv_data)
-
-    def send_data(self, conn_handle, data):
-        # Send data to a connected node
-        self.bt.gattc_write(conn_handle, 0, data)
-
-    def process_buffer(self):
-        # Process received data
-        while self.buffer:
-            length, = ustruct.unpack('<H', self.buffer[:2])
-            message = self.buffer[2:2+length]
-            self.buffer = self.buffer[2+length:]
-            # Return the message for further processing
-            return message
+    def __encode_data(data):
+        return struct.pack("<h", int(data))
+    
+    def __decode_data(data):
+        return struct.unpack("<h", data)[0]
 
 class Node:
     def __init__(self):
         self.client_id = "NODE-1"
-        self.dht_sensor = machine.ADC(machine.Pin(32))
-        self.air_quality_sensor = machine.ADC(machine.Pin(35))
-        self.flame_sensor = machine.ADC(machine.Pin(34))
-        self.wifi = network.WLAN(network.STA_IF)
-        self.wifi.active(True)
+        # self.dht_sensor = machine.ADC(machine.Pin(32))
+        # self.air_quality_sensor = machine.ADC(machine.Pin(35))
+        # self.flame_sensor = machine.ADC(machine.Pin(34))
+        # self.wifi = network.WLAN(network.STA_IF)
+        # self.wifi.active(True)
         self.bt_node = BTNode()
-        self._connect_wifi()
-        self._connect_mqtt()
+        # self._connect_wifi()
+        # self._connect_mqtt()
 
     def _connect_wifi(self):
         self.wifi.connect(wifi_ssid, wifi_pass)
@@ -140,23 +169,13 @@ class Node:
                 ssl_params=ssl_params
             )
             self.mqtt_client.connect()
-            self.mqtt_client.set_callback(self._sub_callback)
             print("connected to mqtt broker")
         except:
             print("error connecting to mqtt broker")
     
-    def read_sensors(self):
-        return [sensor.read() for sensor in self.sensors]
     
-    def send_data(self, data):
-        self.mqtt_client.publish("fire/data", data)
-    
-    def start(self):
+    async def start(self):
         print("starting")
-
-        # self.bt_node.advertise()
-        self.bt_node.scan_and_connect()
-        start_time = time.time()
         while True:
         #    if self.wifi.isconnected():
         #        data = self.read_sensors()
@@ -167,13 +186,11 @@ class Node:
         #    else:
         #        for conn_handle, _ in self.bt_node.connected_nodes:
         #            self.bt_node.send_data(conn_handle, str(self.read_sensors()))
-            print(self.bt_node.connected_nodes)
-            time.sleep(3)
-            elapsed_time = time.time() - start_time  # Calculate elapsed time
-            if elapsed_time >= 10:  # Check if 30 seconds
-                print("30 seconds elapsed, exiting loop.")
-                break
+            device = await self.bt_node.scan_for_nodes()
+            if device is not None:
+                await self.bt_node.connect_to_node(device)
+                await self.bt_node.recieve(device)
 
 print("Hello world")
 node = Node()
-node.start()
+asyncio.run(node.start())
