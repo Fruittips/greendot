@@ -109,22 +109,14 @@ class BTNode:
     async def __advertise(self):
         end_time = time.time() + _ADV_DURATION_S
         while True:
-            # async with await aioble.advertise(
-            #     _ADV_INTERVAL_MS,
-            #     name=_DEVICE_NAME,
-            #     services=[_GREENDOT_SERVICE_UUID],
-            # ) as connection:
-            #     print("Connection from", connection.device)
-            #     ## TODO: FIND OUT WHEN TO DISCONNECT
-            #     # await connection.disconnected()
-            await aioble.advertise(
+            async with await aioble.advertise(
                 _ADV_INTERVAL_MS,
                 name=_DEVICE_NAME,
                 services=[_GREENDOT_SERVICE_UUID],
-            )
-            if time.time() >= end_time:
-                break
-        await asyncio.sleep(1)
+            ) as connection:
+                print("Connection from", connection.device)
+                await connection.disconnected()
+                print("Disconnected. Restarting advertisement...")
     async def __send_sensor_data(self):
         while True:
             temp_sensor_data = 1
