@@ -34,6 +34,7 @@ _DEVICE_NAME = _DEVICE_NAME_PREFIX + "NODE-2"
 
 class BTNode:
     def __init__(self):
+        self.connected_device_name = None
         self.device = None
         self.connection = None
         self.temp_characteristic = None
@@ -68,6 +69,7 @@ class BTNode:
             async for result in scanner:
                 # See if it matches our name and the environmental sensing service.
                 if _DEVICE_NAME_PREFIX in result.name() and _GREENDOT_SERVICE_UUID in result.services():
+                    self.connected_device_name = result.name()
                     self.device = result.device
         return None
     
@@ -197,7 +199,7 @@ class Node:
         #    else:
         #        for conn_handle, _ in self.bt_node.connected_nodes:
         #            self.bt_node.send_data(conn_handle, str(self.read_sensors()))
-        await self.bt_node.act_as_peripheral()
+        self.bt_node.act_as_central()
 
 print("Hello world")
 node = Node()
