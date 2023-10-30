@@ -13,9 +13,6 @@ import aioble
 import random
 import struct
 
-
-# wifi_ssid = "Mah iPhone"
-# wifi_pass = "THEMAHYIDA"
 wifi_ssid = "skku"
 wifi_pass = "skku1398"
 MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
@@ -27,18 +24,18 @@ _FLAME_SENSOR_UUID = bluetooth.UUID(0x2A6A)
 _TEMP_SENSOR_UUID = bluetooth.UUID(0x2A6B)
 _AIR_SENSOR_UUID = bluetooth.UUID(0x2A6C)
 
+_ADV_DURATION_S = 30
 _ADV_INTERVAL_MS = 250_000
 _READ_INTERVAL_MS = 2000
 
 _DEVICE_NAME_PREFIX = "GREENDOT-"
-_DEVICE_NAME = _DEVICE_NAME_PREFIX + "-NODE-1"
+_DEVICE_NAME = _DEVICE_NAME_PREFIX + "NODE-2"
 
 
 class BTNode:
     def __init__(self):
         self.device = None
         self.connection = None
-        self.greendot_service = None
         self.temp_characteristic = None
         self.flame_characteristic = None
         self.air_characteristic = None
@@ -81,10 +78,10 @@ class BTNode:
         try:
             connection = await self.device.connect()
             self.connection = connection
-            temp_service = await self.connection.service(_GREENDOT_SERVICE_UUID)
-            self.temp_characteristic = await temp_service.characteristic(_TEMP_SENSOR_UUID)
-            self.flame_characteristic = await temp_service.characteristic(_FLAME_SENSOR_UUID)
-            self.air_characteristic = await temp_service.characteristic(_AIR_SENSOR_UUID)
+            greendot_service = await self.connection.service(_GREENDOT_SERVICE_UUID)
+            self.temp_characteristic = await greendot_service.characteristic(_TEMP_SENSOR_UUID)
+            self.flame_characteristic = await greendot_service.characteristic(_FLAME_SENSOR_UUID)
+            self.air_characteristic = await greendot_service.characteristic(_AIR_SENSOR_UUID)
         except asyncio.TimeoutError:
             print("Timeout during connection")
             return
@@ -108,29 +105,43 @@ class BTNode:
         return temp, flame, air
     
     async def __advertise(self):
+        end_time = time.time() + _ADV_DURATION_S
         while True:
-            async with await aioble.advertise(
+            # async with await aioble.advertise(
+            #     _ADV_INTERVAL_MS,
+            #     name=_DEVICE_NAME,
+            #     services=[_GREENDOT_SERVICE_UUID],
+            # ) as connection:
+            #     print("Connection from", connection.device)
+            #     ## TODO: FIND OUT WHEN TO DISCONNECT
+            #     # await connection.disconnected()
+            await aioble.advertise(
                 _ADV_INTERVAL_MS,
                 name=_DEVICE_NAME,
                 services=[_GREENDOT_SERVICE_UUID],
-            ) as connection:
-                print("Connection from", connection.device)
-                await connection.disconnected()
-    
+            )
+            if time.time() >= end_time:
+                break
+        await asyncio.sleep(1)
     async def __send_sensor_data(self):
         while True:
             temp_sensor_data = 1
             flame_sensor_data = 2
             air_sensor_data = 3
-            self.temp_characteristic.write(self.__encode_data(temp_sensor_data))
-            self.flame_characteristic.write(self.__encode_data(flame_sensor_data))
-            self.air_characteristic.write(self.__encode_data(air_sensor_data))
+            
+            temp_sensor_data = self.__encode_data(temp_sensor_data)
+            flame_sensor_data = self.__encode_data(flame_sensor_data)
+            air_sensor_data = self.__encode_data(air_sensor_data)
+            
+            self.temp_characteristic.write(temp_sensor_data)
+            self.flame_characteristic.write(flame_sensor_data)
+            self.air_characteristic.write(air_sensor_data)
             await asyncio.sleep_ms(1000)
 
-    def __encode_data(data):
+    def __encode_data(self, data):
         return struct.pack("<h", int(data))
     
-    def __decode_data(data):
+    def __decode_data(self, data):
         return struct.unpack("<h", data)[0]
 
 class Node:
@@ -143,7 +154,7 @@ class Node:
         # self.wifi.active(True)
         self.bt_node = BTNode()
         # self._connect_wifi()
-        # self._connect_mqtt()
+        # self._connect_mqtt()d
 
     def _connect_wifi(self):
         self.wifi.connect(wifi_ssid, wifi_pass)
@@ -176,7 +187,7 @@ class Node:
     
     async def start(self):
         print("starting")
-        while True:
+        # while True:
         #    if self.wifi.isconnected():
         #        data = self.read_sensors()
         #        self.send_data(str(data))
@@ -186,10 +197,7 @@ class Node:
         #    else:
         #        for conn_handle, _ in self.bt_node.connected_nodes:
         #            self.bt_node.send_data(conn_handle, str(self.read_sensors()))
-            device = await self.bt_node.scan_for_nodes()
-            if device is not None:
-                await self.bt_node.connect_to_node(device)
-                await self.bt_node.recieve(device)
+        await self.bt_node.act_as_peripheral()
 
 print("Hello world")
 node = Node()
