@@ -12,6 +12,9 @@ WIFI_SSID = "skku"
 WIFI_PASS = "skku1398"
 MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
 
+WIFI_TOGGLE_BUTTON_PIN = 14
+
+
 
 _GREENDOT_SERVICE_UUID = bluetooth.UUID(0x181A)
 
@@ -162,13 +165,13 @@ class MqttClient:
     def _on_message(self, topic, message):
         data = self._decode_data(message)
         print('Received message on topic {}: {}'.format(topic, data))
-        if topic == _STATUS_TOPIC and 'node_id' in data and 'status' in data:
+        if topic == _STATUS_TOPIC and 'node_id' in data:
             node_id = data['node_id']
             self.dead_nodes_queue.append(node_id)
     
     def pop_dead_node(self):
         if self.dead_nodes_queue:
-            return self.dead_nodes_queue.pop(0)
+            self.dead_nodes_queue.pop(0)
         return None
 
     def check_for_dead_node(self):
@@ -192,7 +195,9 @@ class MqttClient:
                 ssl_params=ssl_params
             )
             self.mqtt_client.set_callback(self._on_message)
-            self.mqtt_client.will_set(_STATUS_TOPIC, "offline", retain=True)
+            self.mqtt_client.will_set(_STATUS_TOPIC, self._encode_data({
+                'node_id': self.client_id,
+            }), retain=False)
             self.mqtt_client.connect()
             self.mqtt_client.subscribe(_STATUS_TOPIC)
             print("connected to mqtt broker")
@@ -242,6 +247,18 @@ class Node:
             print("connecting to Wifi...")
             time.sleep(2)
         print("Wifi connected", self.wifi.isconnected())
+
+    def setup_button(self):
+        self.button = machine.Pin(WIFI_TOGGLE_BUTTON_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
+        self.button.irq(trigger=machine.Pin.IRQ_FALLING, handler=self.toggle_wifi)
+
+    def toggle_wifi(self):
+        if self.wifi.isconnected():
+            print("Disconnecting from WiFi...")
+            self.wifi.disconnect()
+        else:
+            print("Connecting to WiFi...")
+            self._connect_wifi()
         
     async def central_mode(self):
         while True:
