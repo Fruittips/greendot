@@ -33,11 +33,10 @@ _DEVICE_NAME_PREFIX = "GREENDOT-"
 _DEVICE_NAME = _DEVICE_NAME_PREFIX + "NODE-1"
 
 _STATUS_TOPIC = "greendot/node/status"
-
-current_mode = "default"
+_SENSOR_DATA_TOPIC = "greendot/sensor/data"
 
 class BTClient:
-    def __init__(self, mqtt_client):
+    def __init__(self, mqtt_client, default_mode_event, central_mode_event, peripheral_mode_event):
         self.connected_device_name = None
         self.device = None
         self.connection = None
@@ -45,6 +44,9 @@ class BTClient:
         self.flame_characteristic = None
         self.air_characteristic = None
         self.mqtt_client = mqtt_client
+        self.default_mode_event = default_mode_event
+        self.central_mode_event = central_mode_event
+        self.peripheral_mode_event = peripheral_mode_event
         
     async def act_as_central(self):
         try:
@@ -94,8 +96,7 @@ class BTClient:
             return
         
     async def recieve_and_publish_loop(self):
-        global current_mode
-        while current_mode == "central":
+        while self.central_mode_event.is_set():
             if self.connection is None:
                 print("Connection failed")
                 return
@@ -116,8 +117,7 @@ class BTClient:
             await asyncio.sleep_ms(_READ_INTERVAL_MS)
     
     async def advertise(self):
-        global current_mode
-        while current_mode == "peripheral":
+        while self.peripheral_mode_event.is_set():
             async with await aioble.advertise(
                 _ADV_INTERVAL_MS,
                 name=_DEVICE_NAME,
@@ -128,8 +128,7 @@ class BTClient:
                 print("Disconnected. Restarting advertisement...")
 
     async def send_sensor_data(self):
-        global current_mode
-        while current_mode == "peripheral":
+        while self.peripheral_mode_event.is_set():
             temp_sensor_data = 1
             flame_sensor_data = 2
             air_sensor_data = 3
@@ -157,7 +156,7 @@ class MqttClient:
 
     def send_sensor_data(self, nodeId, temp, flame, air):
         self._publish(
-            'greendot/sensor/data',
+            _SENSOR_DATA_TOPIC,
             {
                 'nodeId': nodeId,
                 'temp': temp,
@@ -201,7 +200,7 @@ class MqttClient:
             self.mqtt_client.set_callback(self._on_message)
             self.mqtt_client.will_set(_STATUS_TOPIC, "offline", retain=True)
             self.mqtt_client.connect()
-            self.mqtt_client.subscribe('greendot/node/status')
+            self.mqtt_client.subscribe(_STATUS_TOPIC)
             print("connected to mqtt broker")
         except:
             print("error connecting to mqtt broker")
@@ -217,12 +216,13 @@ class MqttClient:
         return json.loads(data)
     
 class SensorManager:
-    def __init__(self, mqtt_client):
+    def __init__(self, mqtt_client, default_mode_event, central_mode_event):
         self.mqtt_client = mqtt_client
+        self.default_mode_event = default_mode_event
+        self.central_mode_event = central_mode_event
 
     async def read_publish_sensors_data(self):
-        global current_mode
-        while current_mode == "default" or current_mode == "central":
+        while self.default_mode_event.is_set() or self.central_mode_event.is_set():
             temp_sensor_data = 1
             flame_sensor_data = 2
             air_sensor_data = 3
@@ -232,10 +232,13 @@ class SensorManager:
 
 class Node:
     def __init__(self):
+        self.central_mode_event = asyncio.Event()
+        self.peripheral_mode_event = asyncio.Event()
+        self.default_mode_event = asyncio.Event()
         self._connect_wifi()
         self.mqtt_client = MqttClient()
-        self.bt_node = BTClient(self.mqtt_client)
-        self.sensor_manager = SensorManager(self.mqtt_client)
+        self.bt_node = BTClient(self.mqtt_client, self.default_mode_event, self.central_mode_event, self.peripheral_mode_event)
+        self.sensor_manager = SensorManager(self.mqtt_client, self.default_mode_event, self.central_mode_event)
 
     def _connect_wifi(self):
         self.wifi = network.WLAN(network.STA_IF)
@@ -247,51 +250,53 @@ class Node:
         print("Wifi connected", self.wifi.isconnected())
         
     async def central_mode(self):
-        global current_mode
         while True:
-            if current_mode == "central":
-                print("central mode")
-                connection_successful = await self.bt_node.act_as_central()
-                if connection_successful:
-                    self.mqtt_client.pop_dead_node()
-                    recieve_and_publish_BLE = asyncio.create_task(self.bt_node.recieve_and_publish_loop())
-                    read_and_publish_LOCAL = asyncio.create_task(self.sensor_manager.read_publish_sensors_data())
-                    await asyncio.gather(recieve_and_publish_BLE, read_and_publish_LOCAL)
-                else:
-                    print("BLE Connection failed, going back to default behavior")
-                    self.mqtt_client.pop_dead_node()
-                    current_mode = "default"
+            await self.central_mode_event.wait()
+            print("central mode")
+            connection_successful = await self.bt_node.act_as_central()
+            if connection_successful:
+                self.mqtt_client.pop_dead_node()
+                recieve_and_publish_BLE = asyncio.create_task(self.bt_node.recieve_and_publish_loop())
+                read_and_publish_LOCAL = asyncio.create_task(self.sensor_manager.read_publish_sensors_data())
+                await asyncio.gather(recieve_and_publish_BLE, read_and_publish_LOCAL)
+            else:
+                print("BLE Connection failed, going back to default behavior")
+                self.mqtt_client.pop_dead_node()
+                self._set_current_mode("default")
 
     async def peripheral_mode(self):
-        global current_mode
         while True:
-            if current_mode == "peripheral":
-                print("peripheral mode")
-                self.bt_node.set_peripheral_service()
-                adv = asyncio.create_task(self.bt_node.advertise())
-                send_data = asyncio.create_task(self.bt_node.send_sensor_data())
-                await asyncio.gather(adv, send_data)
-            await asyncio.sleep(2) 
+            await self.peripheral_mode_event.wait()
+            print("peripheral mode")
+            self.bt_node.set_peripheral_service()
+            adv = asyncio.create_task(self.bt_node.advertise())
+            send_data = asyncio.create_task(self.bt_node.send_sensor_data())
+            await asyncio.gather(adv, send_data)
 
     async def default_mode(self):
-        global current_mode
         while True:
-            if current_mode == "default":
-                await self.sensor_manager.read_publish_sensors_data()
-            await asyncio.sleep(2)
-
+            await self.default_mode_event.wait()
+            await self.sensor_manager.read_publish_sensors_data()
 
     async def check_and_switch_modes(self):
-        global current_mode
         while True:
             if self.wifi.isconnected():
                 dead_node_id = self.mqtt_client.check_for_dead_node()
                 if dead_node_id is not None:
-                    current_mode = "central"
+                    self.peripheral_mode_event.clear()
+                    self.default_mode_event.clear()
+                    if not self.central_mode_event.is_set():
+                        self.central_mode_event.set()
                 else:
-                    current_mode = "default"
+                    self.central_mode_event.clear()
+                    self.peripheral_mode_event.clear()
+                    if not self.default_mode_event.is_set():
+                        self.default_mode_event.set()
             else:
-                current_mode = "peripheral"
+                self.central_mode_event.clear()
+                self.default_mode_event.clear()
+                if not self.peripheral_mode_event.is_set():
+                    self.peripheral_mode_event.set()
             await asyncio.sleep(2)
     
     async def start(self):
