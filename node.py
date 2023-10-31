@@ -1,16 +1,10 @@
 import machine
 import network
 import bluetooth
-import ustruct
 import umqtt.simple
 import time
-import ubinascii
-import uos
-from micropython import const
 import uasyncio as asyncio
 import aioble
-
-import random
 import struct
 import json
 
