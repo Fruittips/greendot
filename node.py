@@ -51,9 +51,9 @@ class BTClient:
     async def act_as_central(self):
         try:
             # try to scan and connect for 5 minutes
-            await asyncio.wait_for(self.__scan_for_nodes(), timeout=_CENTRAL_SCAN_TIMEOUT)
+            await asyncio.wait_for(self._scan_for_nodes(), timeout=_CENTRAL_SCAN_TIMEOUT)
             print("Found device, connecting...")
-            await self.__connect_to_node()
+            await self._connect_to_node()
             print("Connected, receiving data...")
             return True
         except asyncio.TimeoutError:
@@ -67,7 +67,7 @@ class BTClient:
         self.air_characteristic = aioble.Characteristic(greendot_service, _AIR_SENSOR_UUID, read=True, notify=True)
         aioble.register_services(greendot_service)
     
-    async def __scan_for_nodes(self):
+    async def _scan_for_nodes(self):
         # Scan for 5 seconds, in active mode, with very low interval/window (to
         # maximise detection rate).
         async with aioble.scan(5000, interval_us=30000, window_us=30000, active=True) as scanner:
@@ -80,7 +80,7 @@ class BTClient:
                     self.device = result.device
         return None
     
-    async def __connect_to_node(self):
+    async def _connect_to_node(self):
         if self.device is None:
             print("No device found")
             return
@@ -109,9 +109,9 @@ class BTClient:
             if self.flame_characteristic is None:
                 print("Flame characteristic not found")
                 return
-            temp = self.__decode_data(await self.temp_characteristic.read())
-            flame = self.__decode_data(await self.flame_characteristic.read())
-            air = self.__decode_data(await self.air_characteristic.read())
+            temp = self._decode_data(await self.temp_characteristic.read())
+            flame = self._decode_data(await self.flame_characteristic.read())
+            air = self._decode_data(await self.air_characteristic.read())
             print("Temp: ", str(temp), "Flame: ", str(flame), "Air: ", str(air))
             self.mqtt_client.send_sensor_data(self.connected_device_name ,temp, flame, air)
             await asyncio.sleep_ms(_READ_INTERVAL_MS)
@@ -133,19 +133,19 @@ class BTClient:
             flame_sensor_data = 2
             air_sensor_data = 3
             
-            temp_sensor_data = self.__encode_data(temp_sensor_data)
-            flame_sensor_data = self.__encode_data(flame_sensor_data)
-            air_sensor_data = self.__encode_data(air_sensor_data)
+            temp_sensor_data = self._encode_data(temp_sensor_data)
+            flame_sensor_data = self._encode_data(flame_sensor_data)
+            air_sensor_data = self._encode_data(air_sensor_data)
             
             self.temp_characteristic.write(temp_sensor_data)
             self.flame_characteristic.write(flame_sensor_data)
             self.air_characteristic.write(air_sensor_data)
             await asyncio.sleep_ms(1000)
 
-    def __encode_data(self, data):
+    def _encode_data(self, data):
         return struct.pack("<h", int(data))
     
-    def __decode_data(self, data):
+    def _decode_data(self, data):
         return struct.unpack("<h", data)[0]
     
 class MqttClient:
