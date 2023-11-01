@@ -8,63 +8,37 @@ import aioble
 import struct
 import json
 
+# WIFI
 WIFI_SSID = "skku"
 WIFI_PASS = "skku1398"
+
+# MQTT
 MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
+_SENSOR_DATA_TOPIC = "greendot/sensor/data"
 
-WIFI_TOGGLE_BUTTON_PIN = 14
-
-
-
+# BLE
 _GREENDOT_SERVICE_UUID = bluetooth.UUID(0x181A)
-
+_DATA_UUID = bluetooth.UUID(0x2A6A)
 _FLAME_SENSOR_UUID = bluetooth.UUID(0x2A6A)
 _TEMP_SENSOR_UUID = bluetooth.UUID(0x2A6B)
 _AIR_SENSOR_UUID = bluetooth.UUID(0x2A6C)
-
 _ADV_INTERVAL_MS = 250_000
-_READ_INTERVAL_MS = 2000
-_CENTRAL_SCAN_TIMEOUT = 3000
 
+# Shared
 _DEVICE_NAME_PREFIX = "GREENDOT-"
-_DEVICE_NAME = _DEVICE_NAME_PREFIX + "NODE-1"
+_DEVICE_HIERARCHY = 1
+_NODE_ID = 1
+_DEVICE_NAME = _DEVICE_NAME_PREFIX + _DEVICE_HIERARCHY + "-" + "NODE-" + _NODE_ID
+_DEVICE_MODE = "CENTRAL"
 
-_STATUS_TOPIC = "greendot/node/status"
-_SENSOR_DATA_TOPIC = "greendot/sensor/data"
 
-class BTClient:
-    def __init__(self, mqtt_client, default_mode_event, central_mode_event, peripheral_mode_event):
-        self.connected_device_name = None
-        self.device = None
-        self.connection = None
-        self.temp_characteristic = None
-        self.flame_characteristic = None
-        self.air_characteristic = None
+class BleCentralManager:
+    def __init__(self, mqtt_client):
+        self.devices = {}
         self.mqtt_client = mqtt_client
-        self.default_mode_event = default_mode_event
-        self.central_mode_event = central_mode_event
-        self.peripheral_mode_event = peripheral_mode_event
-        
-    async def act_as_central(self):
-        try:
-            # try to scan and connect for 5 minutes
-            await asyncio.wait_for(self._scan_for_nodes(), timeout=_CENTRAL_SCAN_TIMEOUT)
-            print("Found device, connecting...")
-            await self._connect_to_node()
-            print("Connected, receiving data...")
-            return True
-        except asyncio.TimeoutError:
-            print("Timeout while trying to scan or connect.")
-            return False
+        self.MAX_RECONNECT_ATTEMPTS = 3
     
-    async def set_peripheral_service(self):
-        greendot_service = aioble.Service(_GREENDOT_SERVICE_UUID)
-        self.temp_characteristic = aioble.Characteristic(greendot_service, _TEMP_SENSOR_UUID, read=True, notify=True)
-        self.flame_characteristic = aioble.Characteristic(greendot_service, _FLAME_SENSOR_UUID, read=True, notify=True)
-        self.air_characteristic = aioble.Characteristic(greendot_service, _AIR_SENSOR_UUID, read=True, notify=True)
-        aioble.register_services(greendot_service)
-    
-    async def _scan_for_nodes(self):
+    async def run(self):
         # Scan for 5 seconds, in active mode, with very low interval/window (to
         # maximise detection rate).
         async with aioble.scan(5000, interval_us=30000, window_us=30000, active=True) as scanner:
@@ -73,113 +47,192 @@ class BTClient:
                 name = result.name()
                 services = result.services()
                 if name is not None and services is not None and _DEVICE_NAME_PREFIX in name and _GREENDOT_SERVICE_UUID in services:
-                    self.connected_device_name = name
-                    self.device = result.device
-        return None
-    
-    async def _connect_to_node(self):
-        if self.device is None:
-            print("No device found")
-            return
-        try:
-            connection = await self.device.connect()
-            self.connection = connection
-            greendot_service = await self.connection.service(_GREENDOT_SERVICE_UUID)
-            self.temp_characteristic = await greendot_service.characteristic(_TEMP_SENSOR_UUID)
-            self.flame_characteristic = await greendot_service.characteristic(_FLAME_SENSOR_UUID)
-            self.air_characteristic = await greendot_service.characteristic(_AIR_SENSOR_UUID)
-        except asyncio.TimeoutError:
-            print("Timeout during connection")
-            return
+                    hierachy = name.split("-")[1]
+                    if hierachy == _DEVICE_HIERARCHY+1:
+                        device = result.device
+                        await self.__connect_to_device(device, name)
+                        asyncio.create_task(self.__listen_to_device_characteristic(name))
+
+    async def __connect_to_device(self, device, name):
+        connection = await device.connect()
+        greendot_service = await connection.service(_GREENDOT_SERVICE_UUID)
+        data_characteristic = await greendot_service.characteristic(_DATA_UUID)
+        # Subscribe for notifications
+        await data_characteristic.subscribe(notify=True)
+        self.devices[name] = {
+            'device': device,
+            'connection': connection,
+            'data_characteristic': data_characteristic
+        }
+
+    async def __listen_to_device_characteristic(self, name):
+        device_data = self.devices[name]
         
-    async def recieve_and_publish_loop(self):
-        while self.central_mode_event.is_set():
-            if self.connection is None:
-                print("Connection failed")
-                return
-            if self.air_characteristic is None:
-                print("Air characteristic not found")
-                return
-            if self.temp_characteristic is None:
-                print("Temp characteristic not found")
-                return
-            if self.flame_characteristic is None:
-                print("Flame characteristic not found")
-                return
-            temp = self._decode_data(await self.temp_characteristic.read())
-            flame = self._decode_data(await self.flame_characteristic.read())
-            air = self._decode_data(await self.air_characteristic.read())
-            print("Temp: ", str(temp), "Flame: ", str(flame), "Air: ", str(air))
-            self.mqtt_client.send_sensor_data(self.connected_device_name ,temp, flame, air)
-            await asyncio.sleep_ms(_READ_INTERVAL_MS)
-    
-    async def advertise(self):
-        while self.peripheral_mode_event.is_set():
-            async with await aioble.advertise(
-                _ADV_INTERVAL_MS,
-                name=_DEVICE_NAME,
-                services=[_GREENDOT_SERVICE_UUID],
-            ) as connection:
-                print("Connection from", connection.device)
-                await connection.disconnected()
-                print("Disconnected. Restarting advertisement...")
+        while True:
+            try:
+                data = await device_data['data_characteristic'].notified()
 
-    async def send_sensor_data(self):
-        while self.peripheral_mode_event.is_set():
-            temp_sensor_data = 1
-            flame_sensor_data = 2
-            air_sensor_data = 3
+                print(f"Device: {name}, Temp: {self.__decode_json_data(data)}")
+                self.mqtt_client.send_sensor_data(data)
             
-            temp_sensor_data = self._encode_data(temp_sensor_data)
-            flame_sensor_data = self._encode_data(flame_sensor_data)
-            air_sensor_data = self._encode_data(air_sensor_data)
+            except aioble.GattError:  
+                print(f"Device {name} disconnected.")
+                isReconnected = await self.__attempt_reconnect(device_data['device'])
+                if not isReconnected:
+                    del self.devices[name]
+                    await self.scan_and_connect()
+                    return
+                print(f"Device {name} reconnected.")
             
-            self.temp_characteristic.write(temp_sensor_data)
-            self.flame_characteristic.write(flame_sensor_data)
-            self.air_characteristic.write(air_sensor_data)
-            await asyncio.sleep_ms(1000)
+    async def __attempt_reconnect(self, device):
+        for _ in range(self.MAX_RECONNECT_ATTEMPTS):
+            try:
+                print(f"Attempting to reconnect to {device}")
+                await self.__connect_to_device(device)
+                return True
+            except Exception as e:
+                print(f"Reconnect attempt failed due to {e}")
+                await asyncio.sleep(1)
+        return False
 
-    def _encode_data(self, data):
-        return struct.pack("<h", int(data))
+    def __decode_json_data(self, data):
+        return json.loads(data.decode('utf-8'))
     
-    def _decode_data(self, data):
-        return struct.unpack("<h", data)[0]
+    def __encode_json_data(self, data):
+        return json.dumps(data).encode('utf-8')
     
+class BlePeripheralManager:
+    def __init__(self):
+        self.start_sending_event = asyncio.Event()
+        self.connection_to_send_to = None
+        self.devices_to_aggregate = {}
+        self.sampling_interval = 5
+        self.greendot_service = aioble.Service(_GREENDOT_SERVICE_UUID)
+        self.data_characteristic = aioble.Characteristic(self.greendot_service, _DATA_UUID, read=True, notify=True)
+        aioble.register_services(self.greendot_service)
+        aioble.core.ble.gatts_set_buffer(self._rx_characteristic._value_handle, 128)
+
+    async def run(self):
+        asyncio.create_task(self.__advertise())
+        asyncio.create_task(self.__notify_sensor_data())
+        asyncio.create_task(self.__scan_and_connect())
+
+    async def __advertise(self):
+        connection = await aioble.advertise(
+            _ADV_INTERVAL_MS,
+            name=_DEVICE_NAME,
+            services=[_GREENDOT_SERVICE_UUID],
+        )
+        print("Connection from", connection.device)
+        self.connection_to_send_to = connection
+        self.start_sending_event.set()
+        await connection.disconnected()
+        self.start_sending_event.clear()
+        print("Disconnected. Restarting advertisement...")
+
+    async def __notify_sensor_data(self):
+        while True:
+            await self.start_sending_event.wait()
+            while self.start_sending_event.is_set():
+                # TODO: Get sensor data
+                temp_sensor_data = 1
+                flame_sensor_data = 2
+                air_sensor_data = 3
+
+                self.__notify(
+                    self.__encode_json_data({
+                        "id": _NODE_ID,
+                        "temp": temp_sensor_data,
+                        "flame": flame_sensor_data,
+                        "air": air_sensor_data
+                    })
+                )
+
+    async def __notify(self, data):
+        self.data_characteristic.write(data)
+        self.data_characteristic.notify(self.connection_to_send_to)
+        await asyncio.sleep(self.sampling_interval)
+
+    async def __scan_and_connect(self):
+        # Scan for 5 seconds, in active mode, with very low interval/window (to
+        # maximise detection rate).
+        async with aioble.scan(5000, interval_us=30000, window_us=30000, active=True) as scanner:
+            async for result in scanner:
+                # See if it matches our name and the environmental sensing service.
+                name = result.name()
+                services = result.services()
+                if name is not None and services is not None and _DEVICE_NAME_PREFIX in name and _GREENDOT_SERVICE_UUID in services:
+                    x = name.split("-")
+                    hierachy = x[1]
+                    id = x[-1]
+                    if hierachy == _DEVICE_HIERARCHY+1:
+                        device = result.device
+                        await self.__connect_to_device(device, name, id)
+                        asyncio.create_task(self.__listen_to_device_characteristic(name))
+
+    async def __connect_to_device(self, device, name, id):
+        connection = await device.connect()
+        greendot_service = await connection.service(_GREENDOT_SERVICE_UUID)
+        data_characteristic = await greendot_service.characteristic(_DATA_UUID)
+        # Subscribe for notifications
+        await data_characteristic.subscribe(notify=True)
+        self.devices_to_aggregate[name] = {
+            'id': id,
+            'device': device,
+            'connection': connection,
+            'data_characteristic': data_characteristic
+        }
+
+    async def __listen_to_device_characteristic(self, name):
+        device_data = self.devices_to_aggregate[name]
+        
+        while True:
+            try:
+                data = await device_data['data_characteristic'].notified()
+                print(f"Device: {name}, Temp: {self.__decode_json_data(data)}")
+                
+                self.__notify(
+                    data
+                )
+            except aioble.GattError:
+                print(f"Device {name} disconnected.")
+                isReconnected = await self.__attempt_reconnect(device_data['device'])
+                if not isReconnected:
+                    del self.devices_to_aggregate[name]
+                    await self.scan_and_connect()
+                    return
+                print(f"Device {name} reconnected.")
+            
+    async def __attempt_reconnect(self, device):
+        for _ in range(self.MAX_RECONNECT_ATTEMPTS):
+            try:
+                print(f"Attempting to reconnect to {device}")
+                await self.__connect_to_device(device)
+                return True
+            except Exception as e:
+                print(f"Reconnect attempt failed due to {e}")
+                await asyncio.sleep(1)
+        return False
+
+    def __decode_json_data(self, data):
+        return json.loads(data.decode('utf-8'))
+    
+    def __encode_json_data(self, data):
+        return json.dumps(data).encode('utf-8')
+    
+
 class MqttClient:
     def __init__(self):
         self.client_id = _DEVICE_NAME
-        self.dead_nodes_queue = []
-        self._connect_mqtt()
+        self.__connect_mqtt()
 
-    def send_sensor_data(self, nodeId, temp, flame, air):
-        self._publish(
+    def send_sensor_data(self, data):
+        self.__publish(
             _SENSOR_DATA_TOPIC,
-            {
-                'nodeId': nodeId,
-                'temp': temp,
-                'flame': flame,
-                'air': air
-            }
+            data
         )
 
-    def _on_message(self, topic, message):
-        data = self._decode_data(message)
-        print('Received message on topic {}: {}'.format(topic, data))
-        if topic == _STATUS_TOPIC and 'node_id' in data:
-            node_id = data['node_id']
-            self.dead_nodes_queue.append(node_id)
-    
-    def pop_dead_node(self):
-        if self.dead_nodes_queue:
-            self.dead_nodes_queue.pop(0)
-        return None
-
-    def check_for_dead_node(self):
-        if self.dead_nodes_queue and len(self.dead_nodes_queue) > 0:
-            return self.dead_nodes_queue[0]
-        return None
-
-    def _connect_mqtt(self):
+    def __connect_mqtt(self):
         with open("device.crt", 'r') as f:
             DEVICE_CERT = f.read()
         with open("private.key", 'r') as f:
@@ -194,50 +247,27 @@ class MqttClient:
                 ssl=True,
                 ssl_params=ssl_params
             )
-            self.mqtt_client.set_callback(self._on_message)
-            self.mqtt_client.will_set(_STATUS_TOPIC, self._encode_data({
-                'node_id': self.client_id,
-            }), retain=False)
             self.mqtt_client.connect()
-            self.mqtt_client.subscribe(_STATUS_TOPIC)
             print("connected to mqtt broker")
         except:
             print("error connecting to mqtt broker")
 
-    def _publish(self, topic, data):
-        data = self._encode_data(data)
+    def __publish(self, topic, data):
+        data = self.__encode_data(data)
         self.mqtt_client.publish(topic, data)
 
-    def _encode_data(self, data):
+    def __encode_data(self, data):
         return json.dumps(data)
     
-    def _decode_data(self, data):
+    def __decode_data(self, data):
         return json.loads(data)
     
-class SensorManager:
-    def __init__(self, mqtt_client, default_mode_event, central_mode_event):
-        self.mqtt_client = mqtt_client
-        self.default_mode_event = default_mode_event
-        self.central_mode_event = central_mode_event
-
-    async def read_publish_sensors_data(self):
-        while self.default_mode_event.is_set() or self.central_mode_event.is_set():
-            temp_sensor_data = 1
-            flame_sensor_data = 2
-            air_sensor_data = 3
-            
-            self.mqtt_client.send_sensor_data(_DEVICE_NAME ,temp_sensor_data, flame_sensor_data, air_sensor_data)
-            await asyncio.sleep_ms(_READ_INTERVAL_MS)
 
 class Node:
     def __init__(self):
-        self.central_mode_event = asyncio.Event()
-        self.peripheral_mode_event = asyncio.Event()
-        self.default_mode_event = asyncio.Event()
         self._connect_wifi()
         self.mqtt_client = MqttClient()
-        self.bt_node = BTClient(self.mqtt_client, self.default_mode_event, self.central_mode_event, self.peripheral_mode_event)
-        self.sensor_manager = SensorManager(self.mqtt_client, self.default_mode_event, self.central_mode_event)
+        self.bt_node = BleCentralManager(self.mqtt_client) if _DEVICE_MODE == "CENTRAL" else BlePeripheralManager()
 
     def _connect_wifi(self):
         self.wifi = network.WLAN(network.STA_IF)
@@ -247,78 +277,17 @@ class Node:
             print("connecting to Wifi...")
             time.sleep(2)
         print("Wifi connected", self.wifi.isconnected())
-
-    def setup_button(self):
-        self.button = machine.Pin(WIFI_TOGGLE_BUTTON_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
-        self.button.irq(trigger=machine.Pin.IRQ_FALLING, handler=self.toggle_wifi)
-
-    def toggle_wifi(self):
-        if self.wifi.isconnected():
-            print("Disconnecting from WiFi...")
-            self.wifi.disconnect()
-        else:
-            print("Connecting to WiFi...")
-            self._connect_wifi()
-        
-    async def central_mode(self):
-        while True:
-            await self.central_mode_event.wait()
-            print("central mode")
-            connection_successful = await self.bt_node.act_as_central()
-            if connection_successful:
-                self.mqtt_client.pop_dead_node()
-                recieve_and_publish_BLE = asyncio.create_task(self.bt_node.recieve_and_publish_loop())
-                read_and_publish_LOCAL = asyncio.create_task(self.sensor_manager.read_publish_sensors_data())
-                await asyncio.gather(recieve_and_publish_BLE, read_and_publish_LOCAL)
-            else:
-                print("BLE Connection failed, going back to default behavior")
-                self.mqtt_client.pop_dead_node()
-                self._set_current_mode("default")
-
-    async def peripheral_mode(self):
-        while True:
-            await self.peripheral_mode_event.wait()
-            print("peripheral mode")
-            self.bt_node.set_peripheral_service()
-            adv = asyncio.create_task(self.bt_node.advertise())
-            send_data = asyncio.create_task(self.bt_node.send_sensor_data())
-            await asyncio.gather(adv, send_data)
-
-    async def default_mode(self):
-        while True:
-            await self.default_mode_event.wait()
-            await self.sensor_manager.read_publish_sensors_data()
-
-    async def check_and_switch_modes(self):
-        while True:
-            if self.wifi.isconnected():
-                dead_node_id = self.mqtt_client.check_for_dead_node()
-                if dead_node_id is not None:
-                    self.peripheral_mode_event.clear()
-                    self.default_mode_event.clear()
-                    if not self.central_mode_event.is_set():
-                        self.central_mode_event.set()
-                else:
-                    self.central_mode_event.clear()
-                    self.peripheral_mode_event.clear()
-                    if not self.default_mode_event.is_set():
-                        self.default_mode_event.set()
-            else:
-                self.central_mode_event.clear()
-                self.default_mode_event.clear()
-                if not self.peripheral_mode_event.is_set():
-                    self.peripheral_mode_event.set()
-            await asyncio.sleep(2)
     
     async def start(self):
         print("starting")
         await asyncio.gather(
-            self.check_and_switch_modes(),
-            self.central_mode(),
-            self.peripheral_mode(),
-            self.default_mode(),
+            self.bt_node.run(),
         )
                 
+
+print("Hello world")
+node = Node()
+asyncio.run(node.start())
 
 print("Hello world")
 node = Node()
