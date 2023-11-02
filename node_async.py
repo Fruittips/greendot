@@ -13,10 +13,12 @@ import mqtt_as as MQTTAS
 # aioble.config(mtu=512)
 
 # WIFI
-WIFI_SSID = "skku"
-WIFI_PASS = "skku1398"
+# WIFI_SSID = "skku"
+# WIFI_PASS = "skku1398"
 # WIFI_SSID = "Pixel_myd"
 # WIFI_PASS = "THEMAHYIDA"
+WIFI_SSID = "beebblink"
+WIFI_PASS = "wifi@GOHFAM3456X!"
 
 # MQTT
 MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
