@@ -72,9 +72,8 @@ class BleCentralManager:
                         print("Found device", name)
                         device = result.device
                         await self.__connect_to_device(device, name)
-                        asyncio.gather(
-                            asyncio.create_task(self.__listen_to_device_characteristic(name))
-                        )
+                        await asyncio.create_task(self.__listen_to_device_characteristic(name))
+                        
                 
 
     async def __connect_to_device(self, device, name):
@@ -126,6 +125,8 @@ class BleCentralManager:
                     'air': air,
                     'temp': temp
                 })
+                if len(self.buffer) > 5:
+                    self.send_buffer_mode.set()
             
             except aioble.GattError:  
                 print(f"Device {name} disconnected.")
@@ -173,18 +174,19 @@ class BlePeripheralManager:
         )
 
     async def __advertise(self):
-        print("Starting advertisement...")
-        connection = await aioble.advertise(
-            _ADV_INTERVAL_MS,
-            name=_DEVICE_NAME,
-            services=[_GREENDOT_SERVICE_UUID],
-        )
-        print("Connection from", connection.device)
-        self.connection_to_send_to = connection
-        self.start_sending_event.set()
-        await connection.disconnected()
-        self.start_sending_event.clear()
-        print("Disconnected. Restarting advertisement...")
+        while True:
+            print("Starting advertisement...")
+            connection = await aioble.advertise(
+                _ADV_INTERVAL_MS,
+                name=_DEVICE_NAME,
+                services=[_GREENDOT_SERVICE_UUID],
+            )
+            print("Connection from", connection.device)
+            self.connection_to_send_to = connection
+            self.start_sending_event.set()
+            await connection.disconnected()
+            self.start_sending_event.clear()
+            print("Disconnected. Restarting advertisement...")
 
     async def __notify_sensor_data(self):
         while True:
