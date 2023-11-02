@@ -8,7 +8,7 @@ import aioble
 import struct
 import json
 
-aioble.config(mtu=512)
+aioble.config(mtu=128)
 
 # WIFI
 WIFI_SSID = "skku"
@@ -40,25 +40,7 @@ class BleCentralManager:
     def __init__(self):
         self.devices = {}
         self.MAX_RECONNECT_ATTEMPTS = 3
-
-    def __connect_mqtt(self):
-        with open("device.crt", 'r') as f:
-            DEVICE_CERT = f.read()
-        with open("private.key", 'r') as f:
-            PRIVATE_KEY = f.read()
-        ssl_params = {"key":PRIVATE_KEY, "cert":DEVICE_CERT, "server_side":False}
-        print("connecting to mqtt broker")
-        mqtt_client = umqtt.simple.MQTTClient(
-            client_id=_DEVICE_NAME,
-            server= MQTT_BROKER_ENDPOINT,
-            port=8883,
-            keepalive=1500, 
-            ssl=True,
-            ssl_params=ssl_params
-        )
-        mqtt_client.connect()
-        print("connected to mqtt broker")
-        return mqtt_client
+        self.buffer = []
     
     async def run(self):
         # Scan for 5 seconds, in active mode, with very low interval/window (to
@@ -79,31 +61,30 @@ class BleCentralManager:
 
     async def __connect_to_device(self, device, name):
         connection = await device.connect()
-        await connection.exchange_mtu(512)
+        print(f"Connected to {name}")
+        await connection.exchange_mtu(128)
+        print(f"Connected to {name}1")
         greendot_service = await connection.service(_GREENDOT_SERVICE_UUID)
+        print(f"Connected to {name}2")
         data_characteristic = await greendot_service.characteristic(_DATA_UUID)
+        print(f"Connected to {name}3")
         # Subscribe for notifications
         await data_characteristic.subscribe(notify=True)
-        print(f"Connected to {name}")
         self.devices[name] = {
             'device': device,
-            'connection': connection,
             'data_characteristic': data_characteristic
         }
 
     async def __listen_to_device_characteristic(self, name):
         device_data = self.devices[name]
         
-        mqtt_client = self.__connect_mqtt()
-        
         while True:
             try:
                 print(f"Listening to {name}")
                 data = await device_data['data_characteristic'].notified()
-                print(data)
-                print(f"Device: {name}, data: {self.__decode_json_data(data)}")
-                mqtt_client.publish(_SENSOR_DATA_TOPIC, "TEST")
-                print("SENT")
+                data = self.__decode_json_data(data)
+                print(f"Device: {name}, data: {data}")
+                self.buffer.append(data)
             
             except aioble.GattError:  
                 print(f"Device {name} disconnected.")
@@ -250,10 +231,50 @@ class BlePeripheralManager:
     
     def __encode_json_data(self, data):
         return json.dumps(data).encode('utf-8')
+    
+
+class MqttClient:
+    def __init__(self):
+        self.client_id = _DEVICE_NAME
+        self.__connect_mqtt()
+
+    def send_sensor_data(self, data):
+        print("Sending sensor data...")
+        self.mqtt_client.publish(_SENSOR_DATA_TOPIC, self.__encode_data(data))
+
+    def __connect_mqtt(self):
+        with open("device.crt", 'r') as f:
+            DEVICE_CERT = f.read()
+        with open("private.key", 'r') as f:
+            PRIVATE_KEY = f.read()
+        ssl_params = {"key":PRIVATE_KEY, "cert":DEVICE_CERT, "server_side":False}
+        try:
+            self.mqtt_client = umqtt.simple.MQTTClient(
+                client_id=self.client_id,
+                server= MQTT_BROKER_ENDPOINT,
+                port=8883,
+                keepalive=1500, 
+                ssl=True,
+                ssl_params=ssl_params
+            )
+            self.mqtt_client.connect()
+            print("connected to mqtt broker")
+        except:
+            print("error connecting to mqtt broker")
+        
+
+    def __encode_data(self, data):
+        return json.dumps(data)
+    
+    def __decode_data(self, data):
+        return json.loads(data)
+    
+
 class Node:
     def __init__(self):
         if _DEVICE_MODE == "CENTRAL":
             self._connect_wifi()
+            self.mqtt_client = MqttClient()
         self.bt_node = BleCentralManager() if _DEVICE_MODE == "CENTRAL" else BlePeripheralManager()
 
     def _connect_wifi(self):
@@ -264,11 +285,30 @@ class Node:
             print("connecting to Wifi...")
             time.sleep(5)
         print("Wifi connected", self.wifi.isconnected())
+
+    async def _send_to_mqtt(self):
+        print("INIT")
+        if _DEVICE_MODE != "CENTRAL":
+            print("not central")
+            return
+        print("sending to mqtt")
+        while True:
+            if len(self.bt_node.buffer) == 0:
+                asyncio.sleep(5)
+                continue
+            data = self.bt_node.buffer[0]
+            print("sending to mqtt")
+            self.mqtt_client.send_sensor_data(data)
+            print("sent to mqtt")
+            self.bt_node.buffer.pop(0)
+            asyncio.sleep(5+1)
     
     async def start(self):
         print("starting")
+        
         await asyncio.gather(
             asyncio.create_task(self.bt_node.run()),
+            # asyncio.create_task(self._send_to_mqtt())
         )
                 
 
