@@ -55,7 +55,7 @@ class BleCentralManager:
                 await self.__send_to_mqtt()
             else:
                 await self.scan_and_collect_data()
-            asyncio.sleep(2)
+            await asyncio.sleep(2)
 
     async def scan_and_collect_data(self):
         # Scan for 5 seconds, in active mode, with very low interval/window (to
@@ -100,7 +100,7 @@ class BleCentralManager:
             print("disconnecting")
             await self.device['connection'].disconnect()
             print("disconnected")
-            time.sleep(2)
+            await asyncio.sleep(8)
             print("disconnected time over")
             while len(self.buffer) > 0:
                 # disconnect_coroutines = [
@@ -234,10 +234,11 @@ class MqttClient:
         with open("private.key", 'r') as f:
             self.PRIVATE_KEY = f.read()
         self.__connect_mqtt()
+        self.mqtt_client.publish(_SENSOR_DATA_TOPIC, b'test')
 
     def send_sensor_data(self, data):
         print("Sending sensor data...", self.__encode_data(data))
-        self.mqtt_client.publish(_SENSOR_DATA_TOPIC, b'test')
+        self.mqtt_client.publish(_SENSOR_DATA_TOPIC, 't', qos=1)
 
     def __connect_mqtt(self):
         ssl_params = {"key":self.PRIVATE_KEY, "cert":self.DEVICE_CERT, "server_side":False}
@@ -246,7 +247,7 @@ class MqttClient:
             client_id=self.client_id,
             server= MQTT_BROKER_ENDPOINT,
             port=8883,
-            keepalive=30000, 
+            keepalive=30000,
             ssl=True,
             ssl_params=ssl_params
         )
@@ -257,7 +258,7 @@ class MqttClient:
     async def ping(self):
         while True:
             self.mqtt_client.ping()
-            asyncio.sleep(50)
+            await asyncio.sleep(50)
         
 
     def __encode_data(self, data):
