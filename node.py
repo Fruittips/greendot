@@ -6,7 +6,7 @@ import time
 import uasyncio as asyncio
 import aioble
 import struct
-import json
+import ujson as json
 import gc
 
 # aioble.config(mtu=512)
@@ -19,7 +19,7 @@ WIFI_PASS = "skku1398"
 
 # MQTT
 MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
-_SENSOR_DATA_TOPIC = "greendot/sensor/data"
+_SENSOR_DATA_TOPIC = b'greendot/sensor/data'
 
 # BLE
 _GREENDOT_SERVICE_UUID = bluetooth.UUID(0x181A)
@@ -39,7 +39,7 @@ _DEVICE_MODE = "CENTRAL" if (_NODE_ID == 0 and _DEVICE_HIERARCHY == 0) else "PHE
 
 class BleCentralManager:
     def __init__(self, mqtt_client):
-        self.devices = {}
+        self.device = None
         self.MAX_RECONNECT_ATTEMPTS = 3
         self.buffer = []
         self.mqtt_client = mqtt_client
@@ -47,7 +47,7 @@ class BleCentralManager:
     
     async def run(self):
         self.send_buffer_mode.clear()
-        await asyncio.create_task(self.check_for_mode())
+        await self.check_for_mode()
 
     async def check_for_mode(self):
         while True:
@@ -72,7 +72,7 @@ class BleCentralManager:
                         print("Found device", name)
                         device = result.device
                         await self.__connect_to_device(device, name)
-                        await asyncio.create_task(self.__listen_to_device_characteristic(name))
+                        await self.__listen_to_device_characteristic(name)
                         
                 
 
@@ -87,7 +87,7 @@ class BleCentralManager:
         await flame_characteristic.subscribe(notify=True)
         await air_characteristic.subscribe(notify=True)
         await temp_characteristic.subscribe(notify=True)
-        self.devices[name] = {
+        self.device = {
             'device': device,
             'connection': connection,
             'flame_characteristic': flame_characteristic,
@@ -95,19 +95,27 @@ class BleCentralManager:
             'temp_characteristic': temp_characteristic,
         }
 
-    async def __send_to_mqtt(self, name):
+    async def __send_to_mqtt(self):
         while self.send_buffer_mode.is_set():
+            print("disconnecting")
+            await self.device['connection'].disconnect()
+            print("disconnected")
+            time.sleep(2)
+            print("disconnected time over")
             while len(self.buffer) > 0:
+                # disconnect_coroutines = [
+                #     self.devices[name]['connection'].disconnect()
+                #     for name in self.devices
+                # ]
+                # await asyncio.gather(*disconnect_coroutines)
                 data = self.buffer.pop(0)
                 self.mqtt_client.send_sensor_data(data)
                 print("Sent to mqtt")
             self.send_buffer_mode.clear()
 
-        
-
     async def __listen_to_device_characteristic(self, name):
-        device_data = self.devices[name]
-        while True:
+        device_data = self.device
+        while not self.send_buffer_mode.is_set():
             try:
                 print(f"Listening to {name}")
                 flame, air, temp = await asyncio.gather(
@@ -125,7 +133,7 @@ class BleCentralManager:
                     'air': air,
                     'temp': temp
                 })
-                if len(self.buffer) > 5:
+                if len(self.buffer) > 0:
                     self.send_buffer_mode.set()
             
             except aioble.GattError:  
@@ -168,7 +176,6 @@ class BlePeripheralManager:
 
     async def run(self):
         await asyncio.gather(
-            asyncio.create_task(self.__scan_and_connect()),
             asyncio.create_task(self.__advertise()),
             asyncio.create_task(self.__notify_sensor_data()),
         )
@@ -222,31 +229,35 @@ class BlePeripheralManager:
 class MqttClient:
     def __init__(self):
         self.client_id = _DEVICE_NAME
+        with open("device.crt", 'r') as f:
+            self.DEVICE_CERT = f.read()
+        with open("private.key", 'r') as f:
+            self.PRIVATE_KEY = f.read()
         self.__connect_mqtt()
 
     def send_sensor_data(self, data):
-        print("Sending sensor data...")
-        self.mqtt_client.publish(_SENSOR_DATA_TOPIC, self.__encode_data(data))
+        print("Sending sensor data...", self.__encode_data(data))
+        self.mqtt_client.publish(_SENSOR_DATA_TOPIC, b'test')
 
     def __connect_mqtt(self):
-        with open("device.crt", 'r') as f:
-            DEVICE_CERT = f.read()
-        with open("private.key", 'r') as f:
-            PRIVATE_KEY = f.read()
-        ssl_params = {"key":PRIVATE_KEY, "cert":DEVICE_CERT, "server_side":False}
-        try:
-            self.mqtt_client = umqtt.simple.MQTTClient(
-                client_id=self.client_id,
-                server= MQTT_BROKER_ENDPOINT,
-                port=8883,
-                keepalive=1500, 
-                ssl=True,
-                ssl_params=ssl_params
-            )
-            self.mqtt_client.connect()
-            print("connected to mqtt broker")
-        except:
-            print("error connecting to mqtt broker")
+        ssl_params = {"key":self.PRIVATE_KEY, "cert":self.DEVICE_CERT, "server_side":False}
+        print("connected to mqtt broker 0")
+        self.mqtt_client = umqtt.simple.MQTTClient(
+            client_id=self.client_id,
+            server= MQTT_BROKER_ENDPOINT,
+            port=8883,
+            keepalive=30000, 
+            ssl=True,
+            ssl_params=ssl_params
+        )
+        print("connected to mqtt broker 1")
+        self.mqtt_client.connect()
+        print("connected to mqtt broker")
+
+    async def ping(self):
+        while True:
+            self.mqtt_client.ping()
+            asyncio.sleep(50)
         
 
     def __encode_data(self, data):
@@ -275,10 +286,16 @@ class Node:
     async def start(self):
         print("starting")
         
-        await asyncio.gather(
-            asyncio.create_task(self.bt_node.run()),
-            # asyncio.create_task(self._send_to_mqtt())
-        )
+        if _DEVICE_MODE == "CENTRAL":
+            await asyncio.gather(
+                self.bt_node.run(),
+                # self.mqtt_client.ping()
+            )
+        else:
+            await asyncio.gather(
+                asyncio.create_task(self.bt_node.run()),
+                # asyncio.create_task(self._send_to_mqtt())
+            )
                 
 
 print("Hello world")
