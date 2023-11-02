@@ -7,8 +7,9 @@ import uasyncio as asyncio
 import aioble
 import struct
 import json
+import gc
 
-aioble.config(mtu=128)
+# aioble.config(mtu=512)
 
 # WIFI
 WIFI_SSID = "skku"
@@ -37,12 +38,26 @@ _DEVICE_MODE = "CENTRAL" if (_NODE_ID == 0 and _DEVICE_HIERARCHY == 0) else "PHE
 
 
 class BleCentralManager:
-    def __init__(self):
+    def __init__(self, mqtt_client):
         self.devices = {}
         self.MAX_RECONNECT_ATTEMPTS = 3
         self.buffer = []
+        self.mqtt_client = mqtt_client
+        self.send_buffer_mode = asyncio.Event()
     
     async def run(self):
+        self.send_buffer_mode.clear()
+        await asyncio.create_task(self.check_for_mode())
+
+    async def check_for_mode(self):
+        while True:
+            if self.send_buffer_mode.is_set():
+                await self.__send_to_mqtt()
+            else:
+                await self.scan_and_collect_data()
+            asyncio.sleep(2)
+
+    async def scan_and_collect_data(self):
         # Scan for 5 seconds, in active mode, with very low interval/window (to
         # maximise detection rate).
         async with aioble.scan(5000, interval_us=30000, window_us=30000, active=True) as scanner:
@@ -57,34 +72,60 @@ class BleCentralManager:
                         print("Found device", name)
                         device = result.device
                         await self.__connect_to_device(device, name)
-                        await self.__listen_to_device_characteristic(name)
+                        asyncio.gather(
+                            asyncio.create_task(self.__listen_to_device_characteristic(name))
+                        )
+                
 
     async def __connect_to_device(self, device, name):
         connection = await device.connect()
-        print(f"Connected to {name}")
-        await connection.exchange_mtu(128)
-        print(f"Connected to {name}1")
+        # await connection.exchange_mtu(512)
         greendot_service = await connection.service(_GREENDOT_SERVICE_UUID)
-        print(f"Connected to {name}2")
-        data_characteristic = await greendot_service.characteristic(_DATA_UUID)
-        print(f"Connected to {name}3")
+        flame_characteristic = await greendot_service.characteristic(_FLAME_SENSOR_UUID)
+        air_characteristic = await greendot_service.characteristic(_AIR_SENSOR_UUID)
+        temp_characteristic = await greendot_service.characteristic(_TEMP_SENSOR_UUID)
         # Subscribe for notifications
-        await data_characteristic.subscribe(notify=True)
+        await flame_characteristic.subscribe(notify=True)
+        await air_characteristic.subscribe(notify=True)
+        await temp_characteristic.subscribe(notify=True)
         self.devices[name] = {
             'device': device,
-            'data_characteristic': data_characteristic
+            'connection': connection,
+            'flame_characteristic': flame_characteristic,
+            'air_characteristic': air_characteristic,
+            'temp_characteristic': temp_characteristic,
         }
+
+    async def __send_to_mqtt(self, name):
+        while self.send_buffer_mode.is_set():
+            while len(self.buffer) > 0:
+                data = self.buffer.pop(0)
+                self.mqtt_client.send_sensor_data(data)
+                print("Sent to mqtt")
+            self.send_buffer_mode.clear()
+
+        
 
     async def __listen_to_device_characteristic(self, name):
         device_data = self.devices[name]
-        
         while True:
             try:
                 print(f"Listening to {name}")
-                data = await device_data['data_characteristic'].notified()
-                data = self.__decode_json_data(data)
-                print(f"Device: {name}, data: {data}")
-                self.buffer.append(data)
+                flame, air, temp = await asyncio.gather(
+                    device_data['flame_characteristic'].notified(),
+                    device_data['air_characteristic'].notified(),
+                    device_data['temp_characteristic'].notified(),
+                )
+                flame = self._decode_data(flame)
+                air = self._decode_data(air)
+                temp = self._decode_data(temp)
+                print(f"Device: {name}, data: {flame}, {air}, {temp}")
+                self.buffer.append({
+                    'id': name,
+                    'flame': flame,
+                    'air': air,
+                    'temp': temp
+                })
             
             except aioble.GattError:  
                 print(f"Device {name} disconnected.")
@@ -106,11 +147,11 @@ class BleCentralManager:
                 await asyncio.sleep(1)
         return False
 
-    def __decode_json_data(self, data):
-        return json.loads(data.decode('utf-8'))
+    def _encode_data(self, data):
+        return struct.pack("<h", int(data))
     
-    def __encode_json_data(self, data):
-        return json.dumps(data).encode('utf-8')
+    def _decode_data(self, data):
+        return struct.unpack("<h", data)[0]
     
 class BlePeripheralManager:
     def __init__(self):
@@ -119,7 +160,9 @@ class BlePeripheralManager:
         self.devices_to_aggregate = {}
         self.sampling_interval = 5
         self.greendot_service = aioble.Service(_GREENDOT_SERVICE_UUID)
-        self.data_characteristic = aioble.Characteristic(self.greendot_service, _DATA_UUID, read=True, write=True, notify=True)
+        self.flame_sensor_characteristic = aioble.Characteristic(self.greendot_service, _FLAME_SENSOR_UUID, read=True, write=True, notify=True)
+        self.air_sensor_characteristic = aioble.Characteristic(self.greendot_service, _AIR_SENSOR_UUID, read=True, write=True, notify=True)
+        self.temp_sensor_characteristic = aioble.Characteristic(self.greendot_service, _TEMP_SENSOR_UUID, read=True, write=True, notify=True)
         aioble.register_services(self.greendot_service)
 
     async def run(self):
@@ -154,83 +197,24 @@ class BlePeripheralManager:
                 air_sensor_data = 3000.999
 
                 await self.__notify(
-                    self.__encode_json_data([_NODE_ID,temp_sensor_data,flame_sensor_data,air_sensor_data])
+                    flame_sensor_data,
+                    air_sensor_data,
+                    temp_sensor_data
                 )
 
-    async def __notify(self, data):
-        self.data_characteristic.write(data)
+    async def __notify(self, flame, air, temp):
+        self.flame_sensor_characteristic.set_value(self._encode_data(flame))
+        self.air_sensor_characteristic.set_value(self._encode_data(air))
+        self.temp_sensor_characteristic.set_value(self._encode_data(temp))
         self.data_characteristic.notify(self.connection_to_send_to)
         print("Sent sensor data")
         await asyncio.sleep(self.sampling_interval)
-
-    async def __scan_and_connect(self):
-        # Scan for 5 seconds, in active mode, with very low interval/window (to
-        # maximise detection rate).
-        print("Scanning...")
-        async with aioble.scan(5000, interval_us=30000, window_us=30000, active=True) as scanner:
-            async for result in scanner:
-                # See if it matches our name and the environmental sensing service.
-                name = result.name()
-                services = result.services()
-                if name is not None and services is not None and _DEVICE_NAME_PREFIX in name and _GREENDOT_SERVICE_UUID in services:
-                    print(f"Scanned {name}")
-                    x = name.split("-")
-                    hierachy = int(x[1])
-                    id = int(x[-1])
-                    if hierachy == _DEVICE_HIERARCHY+1:
-                        device = result.device
-                        await self.__connect_to_device(device, name, id)
-                        await self.__listen_to_device_characteristic(name)
-
-    async def __connect_to_device(self, device, name, id):
-        connection = await device.connect()
-        greendot_service = await connection.service(_GREENDOT_SERVICE_UUID)
-        data_characteristic = await greendot_service.characteristic(_DATA_UUID)
-        # Subscribe for notifications
-        await data_characteristic.subscribe(notify=True)
-        self.devices_to_aggregate[name] = {
-            'id': id,
-            'device': device,
-            'connection': connection,
-            'data_characteristic': data_characteristic
-        }
-
-    async def __listen_to_device_characteristic(self, name):
-        device_data = self.devices_to_aggregate[name]
-        
-        while True:
-            try:
-                data = await device_data['data_characteristic'].notified()
-                print(f"Device: {name}, Temp: {self.__decode_json_data(data)}")
-                
-                self.__notify(
-                    data
-                )
-            except aioble.GattError:
-                print(f"Device {name} disconnected.")
-                isReconnected = await self.__attempt_reconnect(device_data['device'], name, device_data['id'])
-                if not isReconnected:
-                    del self.devices_to_aggregate[name]
-                    await self.scan_and_connect()
-                    return
-                print(f"Device {name} reconnected.")
-            
-    async def __attempt_reconnect(self, device, name, id):
-        for _ in range(self.MAX_RECONNECT_ATTEMPTS):
-            try:
-                print(f"Attempting to reconnect to {device}")
-                await self.__connect_to_device(device, name, id)
-                return True
-            except Exception as e:
-                print(f"Reconnect attempt failed due to {e}")
-                await asyncio.sleep(1)
-        return False
-
-    def __decode_json_data(self, data):
-        return json.loads(data.decode('utf-8'))
     
-    def __encode_json_data(self, data):
-        return json.dumps(data).encode('utf-8')
+    def _encode_data(self, data):
+        return struct.pack("<h", int(data))
+    
+    def _decode_data(self, data):
+        return struct.unpack("<h", data)[0]
     
 
 class MqttClient:
@@ -275,7 +259,7 @@ class Node:
         if _DEVICE_MODE == "CENTRAL":
             self._connect_wifi()
             self.mqtt_client = MqttClient()
-        self.bt_node = BleCentralManager() if _DEVICE_MODE == "CENTRAL" else BlePeripheralManager()
+        self.bt_node = BleCentralManager(self.mqtt_client) if _DEVICE_MODE == "CENTRAL" else BlePeripheralManager()
 
     def _connect_wifi(self):
         self.wifi = network.WLAN(network.STA_IF)
@@ -285,23 +269,6 @@ class Node:
             print("connecting to Wifi...")
             time.sleep(5)
         print("Wifi connected", self.wifi.isconnected())
-
-    async def _send_to_mqtt(self):
-        print("INIT")
-        if _DEVICE_MODE != "CENTRAL":
-            print("not central")
-            return
-        print("sending to mqtt")
-        while True:
-            if len(self.bt_node.buffer) == 0:
-                asyncio.sleep(5)
-                continue
-            data = self.bt_node.buffer[0]
-            print("sending to mqtt")
-            self.mqtt_client.send_sensor_data(data)
-            print("sent to mqtt")
-            self.bt_node.buffer.pop(0)
-            asyncio.sleep(5+1)
     
     async def start(self):
         print("starting")
@@ -313,5 +280,6 @@ class Node:
                 
 
 print("Hello world")
+gc.collect()
 node = Node()
 asyncio.run(node.start())
