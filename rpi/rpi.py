@@ -37,7 +37,7 @@ class AsyncMQTTManager:
         self.client.tls_set(ca_certs=CA_CERTS_PATH,
                             certfile=CERTFILE_PATH,
                             keyfile=KEYFILE_PATH,
-                            tls_version=ssl.VERIFY_X509_TRUSTED_FIRST)
+                            tls_version=ssl.VERIFY_X509_STRICT)
         self.client.tls_insecure_set(False)
         self.client.connect(broker_endpoint, port=8883)
 
