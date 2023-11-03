@@ -7,7 +7,8 @@ import ssl
 # MQTT and BLE Configuration
 WIFI_SSID = "skku"
 WIFI_PASS = "skku1398"
-MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
+# MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
+MQTT_BROKER_ENDPOINT = "broker.hivemq.com"
 SENSOR_DATA_TOPIC = 'greendot/sensor/data'
 
 DEVICE_NAME_PREFIX = "GREENDOT-"
@@ -31,16 +32,17 @@ class AsyncMQTTManager:
     def __init__(self, broker_endpoint, loop):
         self.loop = loop
         self.client = mqtt.Client()
-        self.client.tls_set(ca_certs=CA_CERTS_PATH,
-                            certfile=CERTFILE_PATH,
-                            keyfile=KEYFILE_PATH,
-                            tls_version=ssl.PROTOCOL_TLSv1_2)
-        self.client.tls_insecure_set(False)
+        # self.client.tls_set(ca_certs=CA_CERTS_PATH,
+        #                     certfile=CERTFILE_PATH,
+        #                     keyfile=KEYFILE_PATH,
+        #                     tls_version=ssl.PROTOCOL_TLSv1_2)
+        # self.client.tls_insecure_set(False)
         self.client.connect(broker_endpoint, port=8883)
 
     async def publish(self, topic, message):
         result, mid = await self.loop.run_in_executor(None, self.client.publish, topic, message)
         return result
+
 
 
 # BLE Delegate to handle Notifications
