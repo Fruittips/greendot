@@ -52,7 +52,8 @@ class NotificationDelegate(DefaultDelegate):
 
 # BLE Manager with asyncio support
 class AsyncBLEManager:
-    def __init__(self, device_name_prefix, mqtt_manager):
+    def __init__(self, device_name_prefix, mqtt_manager, loop):
+        self.loop = loop
         self.device_name_prefix = device_name_prefix
         self.mqtt_manager = mqtt_manager
         self.devices_to_connect = []
