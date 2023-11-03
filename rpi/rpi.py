@@ -77,7 +77,7 @@ class AsyncBLEManager:
         print(3)
         while True:
             try:
-                print(4)
+                print(4, addr)
                 self.peripheral = Peripheral(addr)
                 print(5)
                 notification_delegate = NotificationDelegate(self.mqtt_manager)
