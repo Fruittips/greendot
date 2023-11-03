@@ -48,8 +48,8 @@ class NotificationDelegate(DefaultDelegate):
         DefaultDelegate.__init__(self)
         self.mqtt_manager = mqtt_manager
 
-    def handleNotification(self, cHandle, data):
-        print("Received notification from handle: {}".format(cHandle))
+    async def handleNotification(self, cHandle, data):
+        print("Received notification from handle: {}".format(data))
         asyncio.run_coroutine_threadsafe(
             self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data),
             self.mqtt_manager.loop
@@ -74,6 +74,7 @@ class AsyncBLEManager:
                     # await self.handle_device_connection(dev.addr)
 
     async def connect_and_listen(self):
+        # toggle_wifi(False)
         print(1)
         tasks = [self.loop.create_task(self.handle_device_connection(addr)) for addr in self.devices_to_connect]
         print(2)
