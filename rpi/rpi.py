@@ -1,10 +1,8 @@
-from bluepy import btle
-from bluepy.btle import Scanner, DefaultDelegate
+from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID
 import paho.mqtt.client as mqtt
 import threading
 import time
 import ssl
-
 
 # MQTT and BLE Configuration
 WIFI_SSID = "skku"
@@ -19,7 +17,7 @@ FLAME_SENSOR_UUID = "00002A6A-0000-1000-8000-00805f9b34fb"
 TEMP_SENSOR_UUID = "00002A6B-0000-1000-8000-00805f9b34fb"
 AIR_SENSOR_UUID = "00002A6C-0000-1000-8000-00805f9b34fb"
 
-CA_CERTS_PATH = "./AmazonRootCA1.crt"  # Root CA certificate
+CA_CERTS_PATH = "./AmazonRootCA1.pem"  # Root CA certificate
 CERTFILE_PATH = "./device.pem.crt"  # Client certificate
 KEYFILE_PATH = "./private.pem.key"  # Private key
 
@@ -71,15 +69,15 @@ class BLEManager:
     def connect_and_listen(self):
         for addr in self.devices_to_connect:
             print(f"Connecting to {addr}")
-            peripheral = btle.Peripheral(addr)
+            peripheral = Peripheral(addr)
             peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
 
             try:
                 # Assuming all characteristics use notify property and have descriptors to enable notifications
                 for svc in peripheral.getServices():
-                    if svc.uuid == btle.UUID(GREENDOT_SERVICE_UUID):
+                    if svc.uuid == UUID(GREENDOT_SERVICE_UUID):
                         for char in svc.getCharacteristics():
-                            if char.uuid in [btle.UUID(FLAME_SENSOR_UUID), btle.UUID(TEMP_SENSOR_UUID), btle.UUID(AIR_SENSOR_UUID)]:
+                            if char.uuid in [UUID(FLAME_SENSOR_UUID), UUID(TEMP_SENSOR_UUID), UUID(AIR_SENSOR_UUID)]:
                                 peripheral.writeCharacteristic(char.getHandle() + 1, b"\x01\x00")
                                 while True:
                                     if peripheral.waitForNotifications(1.0):
@@ -97,11 +95,11 @@ class NodeManager:
         # Run BLE scanning and connection in a separate thread
         threading.Thread(target=self.ble_manager.scan_for_devices).start()
         time.sleep(5)  # Give some time for the scan to complete
-        threading.Thread(target=self.ble_manager.connect_and_listen, args=(self.mqtt_manager,)).start()
+        threading.Thread(target=self.ble_manager.connect_and_listen).start()
 
 # Main execution
 if __name__ == "__main__":
     mqtt_manager = MQTTManager(MQTT_BROKER_ENDPOINT)
-    ble_manager = BLEManager(DEVICE_NAME_PREFIX)
+    ble_manager = BLEManager(DEVICE_NAME_PREFIX, mqtt_manager)
     node_manager = NodeManager(ble_manager, mqtt_manager)
     node_manager.run()
