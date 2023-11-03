@@ -5,6 +5,7 @@ import paho.mqtt.client as mqtt
 import ssl
 import json
 import struct
+import time
 
 # MQTT and BLE Configuration
 WIFI_SSID = "skku"
@@ -44,6 +45,7 @@ class AsyncMQTTManager:
                             tls_version=ssl.PROTOCOL_TLSv1_2)
         # self.client.tls_insecure_set(False)
         self.client.connect(broker_endpoint, port=8883)
+        time.sleep(10)
 
     async def publish(self, topic, message):
         result, mid = await self.loop.run_in_executor(None, self.client.publish, topic, message)
