@@ -1,3 +1,4 @@
+import os
 import asyncio
 from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID
 import paho.mqtt.client as mqtt
@@ -18,6 +19,12 @@ AIR_SENSOR_UUID = "00002A6C-0000-1000-8000-00805f9b34fb"
 CA_CERTS_PATH = "./AmazonRootCA1.pem"  # Root CA certificate
 CERTFILE_PATH = "./device.pem.crt"  # Client certificate
 KEYFILE_PATH = "./private.pem.key"  # Private key
+
+def toggle_wifi(state):
+    os.system(f"sudo ifconfig wlan0 {'up' if state else 'down'}")
+
+def toggle_bluetooth(state):
+    os.system(f"sudo systemctl {'start' if state else 'stop'} bluetooth")
 
 # MQTT Manager with asyncio support
 class AsyncMQTTManager:
@@ -128,3 +135,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
