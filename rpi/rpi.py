@@ -8,7 +8,7 @@ import ssl
 WIFI_SSID = "skku"
 WIFI_PASS = "skku1398"
 # MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
-MQTT_BROKER_ENDPOINT = "broker.hivemq.com"
+MQTT_BROKER_ENDPOINT = "public.mqtthq.com"
 SENSOR_DATA_TOPIC = 'greendot/sensor/data'
 
 DEVICE_NAME_PREFIX = "GREENDOT-"
@@ -37,7 +37,7 @@ class AsyncMQTTManager:
         #                     keyfile=KEYFILE_PATH,
         #                     tls_version=ssl.PROTOCOL_TLSv1_2)
         # self.client.tls_insecure_set(False)
-        self.client.connect(broker_endpoint, port=8883)
+        self.client.connect(broker_endpoint, port=1883)
 
     async def publish(self, topic, message):
         result, mid = await self.loop.run_in_executor(None, self.client.publish, topic, message)
