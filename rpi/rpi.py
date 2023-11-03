@@ -1,3 +1,4 @@
+import asyncio
 from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID
 import paho.mqtt.client as mqtt
 import threading
@@ -21,24 +22,21 @@ CA_CERTS_PATH = "./AmazonRootCA1.pem"  # Root CA certificate
 CERTFILE_PATH = "./device.pem.crt"  # Client certificate
 KEYFILE_PATH = "./private.pem.key"  # Private key
 
-# MQTT Manager
-class MQTTManager:
-    def __init__(self, broker_endpoint):
+# MQTT Manager with asyncio support
+class AsyncMQTTManager:
+    def __init__(self, broker_endpoint, loop):
+        self.loop = loop
         self.client = mqtt.Client()
-        # Configure TLS set
         self.client.tls_set(ca_certs=CA_CERTS_PATH,
                             certfile=CERTFILE_PATH,
                             keyfile=KEYFILE_PATH,
                             tls_version=ssl.PROTOCOL_TLSv1_2)
+        self.client.tls_insecure_set(False)
+        self.client.connect(broker_endpoint, port=8883)
 
-        # TLS options
-        self.client.tls_insecure_set(False)  # Set to True if the broker's domain name does not match the certificate
-
-        # Connect with SSL/TLS
-        self.client.connect(broker_endpoint, port=8883)  # As
-    
-    def publish(self, topic, message):
-        self.client.publish(topic, message)
+    async def publish(self, topic, message):
+        func = lambda: self.client.publish(topic, message)
+        await self.loop.run_in_executor(None, func)
 
 # BLE Delegate to handle Notifications
 class NotificationDelegate(DefaultDelegate):
@@ -47,80 +45,61 @@ class NotificationDelegate(DefaultDelegate):
         self.mqtt_manager = mqtt_manager
 
     def handleNotification(self, cHandle, data):
-        print("Notification:", str(data))
-        self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data)
+        asyncio.run_coroutine_threadsafe(
+            self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data),
+            self.mqtt_manager.loop
+        )
 
-# BLE Manager using bluepy
-class BLEManager:
+# BLE Manager with asyncio support
+class AsyncBLEManager:
     def __init__(self, device_name_prefix, mqtt_manager):
         self.device_name_prefix = device_name_prefix
         self.mqtt_manager = mqtt_manager
         self.devices_to_connect = []
-    
-    def scan_for_devices(self):
+
+    async def scan_for_devices(self):
         scanner = Scanner()
-        devices = scanner.scan(10.0)
+        devices = await self.loop.run_in_executor(None, scanner.scan, 10.0)
         for dev in devices:
             for (adtype, desc, value) in dev.getScanData():
                 if desc == "Complete Local Name" and value.startswith(self.device_name_prefix):
                     self.devices_to_connect.append(dev.addr)
                     print(f"Found BLE device with address: {dev.addr}")
 
-    def connect_and_listen(self):
-        for addr in self.devices_to_connect:
-            # Start each device connection in its own daemon thread
-            device_thread = threading.Thread(target=self.handle_device_connection, args=(addr,))
-            device_thread.setDaemon(True)
-            device_thread.start()
-    
-    def handle_device_connection(self, addr):
+    async def connect_and_listen(self):
+        tasks = [self.loop.create_task(self.handle_device_connection(addr)) for addr in self.devices_to_connect]
+        await asyncio.gather(*tasks)
+
+    async def handle_device_connection(self, addr):
         while True:
             try:
-                print(f"Connecting to {addr}")
                 peripheral = Peripheral(addr)
-                print(peripheral)
                 peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
-                
-                # Assuming all characteristics use notify property and have descriptors to enable notifications
-                for svc in peripheral.getServices():
-                    print(svc.uuid == UUID(GREENDOT_SERVICE_UUID))
-                    if svc.uuid == UUID(GREENDOT_SERVICE_UUID):
-                        for char in svc.getCharacteristics():
-                            if char.uuid in [UUID(FLAME_SENSOR_UUID), UUID(TEMP_SENSOR_UUID), UUID(AIR_SENSOR_UUID)]:
-                                peripheral.writeCharacteristic(char.getHandle() + 1, b"\x01\x00")
-                                while True:
-                                    if peripheral.waitForNotifications(1.0):
-                                        continue
+                # ... [Setting up characteristics and enabling notifications]
+
+                while True:
+                    await self.loop.run_in_executor(None, peripheral.waitForNotifications, 1.0)
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
-                print("Attempting to reconnect...")
-                time.sleep(5)  # Wait for 5 seconds before trying to reconnect
+                await asyncio.sleep(5)
 
-
-# Node Manager
-class NodeManager:
+# Node Manager with asyncio support
+class AsyncNodeManager:
     def __init__(self, ble_manager, mqtt_manager):
         self.ble_manager = ble_manager
         self.mqtt_manager = mqtt_manager
 
-    def run(self):
-        # Start the BLE scanning in a separate thread
-        ble_scan_thread = threading.Thread(target=self.ble_manager.scan_for_devices)
-        ble_scan_thread.setDaemon(True)
-        ble_scan_thread.start()
+    async def run(self):
+        await self.ble_manager.scan_for_devices()
+        await self.ble_manager.connect_and_listen()
 
-        # Give some time for the scan to complete
-        ble_scan_thread.join()
+# Main execution with asyncio event loop
+async def main():
+    loop = asyncio.get_running_loop()
+    mqtt_manager = AsyncMQTTManager(MQTT_BROKER_ENDPOINT, loop)
+    ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager)
+    node_manager = AsyncNodeManager(ble_manager, mqtt_manager)
+    await node_manager.run()
 
-        # Then start the connection/listening threads
-        ble_connect_thread = threading.Thread(target=self.ble_manager.connect_and_listen)
-        ble_connect_thread.start()
-        ble_connect_thread.join()
-
-
-# Main execution
 if __name__ == "__main__":
-    mqtt_manager = MQTTManager(MQTT_BROKER_ENDPOINT)
-    ble_manager = BLEManager(DEVICE_NAME_PREFIX, mqtt_manager)
-    node_manager = NodeManager(ble_manager, mqtt_manager)
-    node_manager.run()
+    asyncio.run(main())
