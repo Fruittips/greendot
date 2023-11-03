@@ -97,11 +97,11 @@ class NodeManager:
         # Run BLE scanning and connection in a separate thread
         threading.Thread(target=self.ble_manager.scan_for_devices).start()
         time.sleep(5)  # Give some time for the scan to complete
-        threading.Thread(target=self.ble_manager.connect_and_listen, args=(self.mqtt_manager,)).start()
+        threading.Thread(target=self.ble_manager.connect_and_listen).start()
 
 # Main execution
 if __name__ == "__main__":
     mqtt_manager = MQTTManager(MQTT_BROKER_ENDPOINT)
-    ble_manager = BLEManager(DEVICE_NAME_PREFIX)
+    ble_manager = BLEManager(DEVICE_NAME_PREFIX, mqtt_manager)
     node_manager = NodeManager(ble_manager, mqtt_manager)
     node_manager.run()
