@@ -79,20 +79,16 @@ class BLEManager:
                 print(f"Connecting to {addr}")
                 peripheral = Peripheral(addr)
                 peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
-                for addr in self.devices_to_connect:
-                    print(f"Connecting to {addr}")
-                    peripheral = Peripheral(addr)
-                    peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
-
-                    # Assuming all characteristics use notify property and have descriptors to enable notifications
-                    for svc in peripheral.getServices():
-                        if svc.uuid == UUID(GREENDOT_SERVICE_UUID):
-                            for char in svc.getCharacteristics():
-                                if char.uuid in [UUID(FLAME_SENSOR_UUID), UUID(TEMP_SENSOR_UUID), UUID(AIR_SENSOR_UUID)]:
-                                    peripheral.writeCharacteristic(char.getHandle() + 1, b"\x01\x00")
-                                    while True:
-                                        if peripheral.waitForNotifications(1.0):
-                                            continue
+                
+                # Assuming all characteristics use notify property and have descriptors to enable notifications
+                for svc in peripheral.getServices():
+                    if svc.uuid == UUID(GREENDOT_SERVICE_UUID):
+                        for char in svc.getCharacteristics():
+                            if char.uuid in [UUID(FLAME_SENSOR_UUID), UUID(TEMP_SENSOR_UUID), UUID(AIR_SENSOR_UUID)]:
+                                peripheral.writeCharacteristic(char.getHandle() + 1, b"\x01\x00")
+                                while True:
+                                    if peripheral.waitForNotifications(1.0):
+                                        continue
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
                 print("Attempting to reconnect...")
