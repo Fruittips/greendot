@@ -78,10 +78,12 @@ class BLEManager:
             try:
                 print(f"Connecting to {addr}")
                 peripheral = Peripheral(addr)
+                print(peripheral)
                 peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
                 
                 # Assuming all characteristics use notify property and have descriptors to enable notifications
                 for svc in peripheral.getServices():
+                    print(svc.uuid == UUID(GREENDOT_SERVICE_UUID))
                     if svc.uuid == UUID(GREENDOT_SERVICE_UUID):
                         for char in svc.getCharacteristics():
                             if char.uuid in [UUID(FLAME_SENSOR_UUID), UUID(TEMP_SENSOR_UUID), UUID(AIR_SENSOR_UUID)]:
@@ -108,10 +110,12 @@ class NodeManager:
         ble_scan_thread.start()
 
         # Give some time for the scan to complete
-        ble_scan_thread.join(timeout=15)
+        ble_scan_thread.join()
 
         # Then start the connection/listening threads
-        self.ble_manager.connect_and_listen()
+        ble_connect_thread = threading.Thread(target=self.ble_manager.connect_and_listen)
+        ble_connect_thread.start()
+        ble_connect_thread.join()
 
 
 # Main execution
