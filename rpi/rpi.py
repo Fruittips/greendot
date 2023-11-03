@@ -62,7 +62,7 @@ class AsyncBLEManager:
         scanner = Scanner()
         devices = await self.loop.run_in_executor(None, scanner.scan, 30.0)
         for dev in devices:
-            async for (adtype, desc, value) in dev.getScanData():
+            for (adtype, desc, value) in dev.getScanData():
                 if desc == "Complete Local Name" and value.startswith(self.device_name_prefix):
                     # self.devices_to_connect.append(dev.addr)
                     await self.handle_device_connection(dev.addr)
