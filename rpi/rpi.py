@@ -60,13 +60,13 @@ class AsyncBLEManager:
 
     async def scan_for_devices(self):
         scanner = Scanner()
-        devices = await self.loop.run_in_executor(None, scanner.scan, 30.0)
+        devices = await self.loop.run_in_executor(None, scanner.scan, 10.0)
         for dev in devices:
             for (adtype, desc, value) in dev.getScanData():
-                if desc == "Complete Local Name" and value.startswith(self.device_name_prefix):
+                if value.startswith(self.device_name_prefix):
                     # self.devices_to_connect.append(dev.addr)
+                    print(f"Found BLE device with address: {dev.addr} {value}")
                     await self.handle_device_connection(dev.addr)
-                    print(f"Found BLE device with address: {dev.addr}")
 
     async def connect_and_listen(self):
         tasks = [self.loop.create_task(self.handle_device_connection(addr)) for addr in self.devices_to_connect]
