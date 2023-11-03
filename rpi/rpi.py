@@ -19,9 +19,13 @@ FLAME_SENSOR_UUID = "00002A6A-0000-1000-8000-00805f9b34fb"
 TEMP_SENSOR_UUID = "00002A6B-0000-1000-8000-00805f9b34fb"
 AIR_SENSOR_UUID = "00002A6C-0000-1000-8000-00805f9b34fb"
 
-CA_CERTS_PATH = "./AmazonRootCA3.pem"  # Root CA certificate
-CERTFILE_PATH = "./device.pem.crt"  # Client certificate
-KEYFILE_PATH = "./private.pem.key"  # Private key
+# CA_CERTS_PATH = "./AmazonRootCA3.pem"  # Root CA certificate
+# CERTFILE_PATH = "./device.pem.crt"  # Client certificate
+# KEYFILE_PATH = "./private.pem.key"  # Private key
+
+CA_CERTS_PATH = "./AwsRootCA1.pem"  # Root CA certificate
+CERTFILE_PATH = "./awsdevice.pem.crt"  # Client certificate
+KEYFILE_PATH = "./awsprivate.pem.key"  # Private key
 
 def toggle_wifi(state):
     os.system(f"sudo ifconfig wlan0 {'up' if state else 'down'}")
