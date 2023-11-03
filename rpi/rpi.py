@@ -3,6 +3,7 @@ import asyncio
 from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID
 import paho.mqtt.client as mqtt
 import ssl
+import json
 
 # MQTT and BLE Configuration
 WIFI_SSID = "skku"
@@ -63,7 +64,9 @@ class NotificationDelegate(DefaultDelegate):
     async def async_handle_notification(self, data):
         # Now we're in async context, we can await coroutines
         try:
-            await self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data)
+            print(data)
+            print(json.dumps(data))
+            await self.mqtt_manager.publish(SENSOR_DATA_TOPIC, json.dumps(data))
             print(f"Published data to {SENSOR_DATA_TOPIC}")
         except Exception as e:
             print(f"Failed to publish data: {e}")
