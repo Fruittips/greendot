@@ -68,22 +68,23 @@ class BLEManager:
 
     def connect_and_listen(self):
         for addr in self.devices_to_connect:
-            print(f"Connecting to {addr}")
-            peripheral = Peripheral(addr)
-            peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
-
+            # Start each device connection in its own daemon thread
+            device_thread = threading.Thread(target=self.handle_device_connection, args=(addr,))
+            device_thread.setDaemon(True)
+            device_thread.start()
+    
+    def handle_device_connection(self, addr):
+        while True:
             try:
-                # Assuming all characteristics use notify property and have descriptors to enable notifications
-                for svc in peripheral.getServices():
-                    if svc.uuid == UUID(GREENDOT_SERVICE_UUID):
-                        for char in svc.getCharacteristics():
-                            if char.uuid in [UUID(FLAME_SENSOR_UUID), UUID(TEMP_SENSOR_UUID), UUID(AIR_SENSOR_UUID)]:
-                                peripheral.writeCharacteristic(char.getHandle() + 1, b"\x01\x00")
-                                while True:
-                                    if peripheral.waitForNotifications(1.0):
-                                        continue
+                print(f"Connecting to {addr}")
+                peripheral = Peripheral(addr)
+                peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
+                # ... [rest of your connection and listening code] ...
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
+                print("Attempting to reconnect...")
+                time.sleep(5)  # Wait for 5 seconds before trying to reconnect
+
 
 # Node Manager
 class NodeManager:
@@ -92,10 +93,17 @@ class NodeManager:
         self.mqtt_manager = mqtt_manager
 
     def run(self):
-        # Run BLE scanning and connection in a separate thread
-        threading.Thread(target=self.ble_manager.scan_for_devices).start()
-        time.sleep(5)  # Give some time for the scan to complete
-        threading.Thread(target=self.ble_manager.connect_and_listen).start()
+        # Start the BLE scanning in a separate thread
+        ble_scan_thread = threading.Thread(target=self.ble_manager.scan_for_devices)
+        ble_scan_thread.setDaemon(True)
+        ble_scan_thread.start()
+
+        # Give some time for the scan to complete
+        ble_scan_thread.join(timeout=15)
+
+        # Then start the connection/listening threads
+        self.ble_manager.connect_and_listen()
+
 
 # Main execution
 if __name__ == "__main__":
