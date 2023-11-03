@@ -72,8 +72,10 @@ class AsyncBLEManager:
     async def handle_device_connection(self, addr):
         while True:
             try:
-                peripheral = Peripheral(addr)
-                peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
+                peripheral = await self.loop.run_in_executor(None, Peripheral, addr)
+                await self.loop.run_in_executor(None, peripheral.setDelegate, NotificationDelegate(self.mqtt_manager))
+                # peripheral = Peripheral(addr)
+                # peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
                 services = await self.loop.run_in_executor(None, peripheral.getServices)
                 for service in services:
                     if service.uuid == UUID(GREENDOT_SERVICE_UUID):
