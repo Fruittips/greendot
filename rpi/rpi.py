@@ -97,7 +97,7 @@ class AsyncNodeManager:
 async def main():
     loop = asyncio.get_running_loop()
     mqtt_manager = AsyncMQTTManager(MQTT_BROKER_ENDPOINT, loop)
-    ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager)
+    ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
     node_manager = AsyncNodeManager(ble_manager, mqtt_manager)
     await node_manager.run()
 
