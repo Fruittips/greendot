@@ -63,7 +63,7 @@ class NotificationDelegate(DefaultDelegate):
     async def async_handle_notification(self, data):
         # Now we're in async context, we can await coroutines
         try:
-            await self.mqtt_manager.publish(SENSOR_DATA_TOPIC, b'test')
+            await self.mqtt_manager.publish(SENSOR_DATA_TOPIC, 'test')
             print(f"Published data to {SENSOR_DATA_TOPIC}")
         except Exception as e:
             print(f"Failed to publish data: {e}")
