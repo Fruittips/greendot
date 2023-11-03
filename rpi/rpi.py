@@ -73,7 +73,9 @@ class AsyncBLEManager:
         while True:
             try:
                 peripheral = await self.loop.run_in_executor(None, Peripheral, addr)
-                await self.loop.run_in_executor(None, peripheral.setDelegate, NotificationDelegate(self.mqtt_manager))
+                notification_delegate = NotificationDelegate(self.mqtt_manager)
+                peripheral.setDelegate(notification_delegate)
+                # await self.loop.run_in_executor(None, peripheral.setDelegate, NotificationDelegate(self.mqtt_manager))
                 # peripheral = Peripheral(addr)
                 # peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
                 services = await self.loop.run_in_executor(None, peripheral.getServices)
