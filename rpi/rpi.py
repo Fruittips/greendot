@@ -76,10 +76,15 @@ class AsyncBLEManager:
             try:
                 peripheral = Peripheral(addr)
                 peripheral.setDelegate(NotificationDelegate(self.mqtt_manager))
-                # ... [Setting up characteristics and enabling notifications]
-
-                while True:
-                    await self.loop.run_in_executor(None, peripheral.waitForNotifications, 1.0)
+                services = await self.loop.run_in_executor(None, peripheral.getServices)
+                for service in services:
+                    if service.uuid == UUID(GREENDOT_SERVICE_UUID):
+                        characteristics = await self.loop.run_in_executor(None, service.getCharacteristics)
+                        for char in characteristics:
+                            if char.uuid in [UUID(FLAME_SENSOR_UUID), UUID(TEMP_SENSOR_UUID), UUID(AIR_SENSOR_UUID)]:
+                                await self.loop.run_in_executor(None, peripheral.writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
+                                while True:
+                                    await self.loop.run_in_executor(None, peripheral.waitForNotifications, 1.0)
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
                 await asyncio.sleep(5)
