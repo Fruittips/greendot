@@ -39,21 +39,32 @@ class AsyncMQTTManager:
         self.client.connect(broker_endpoint, port=8883)
 
     async def publish(self, topic, message):
-        func = lambda: self.client.publish(topic, message)
-        await self.loop.run_in_executor(None, func)
+        result, mid = await self.loop.run_in_executor(None, self.client.publish, topic, message)
+        return result
+
 
 # BLE Delegate to handle Notifications
 class NotificationDelegate(DefaultDelegate):
-    def __init__(self, mqtt_manager):
+    def __init__(self, mqtt_manager, loop):
         DefaultDelegate.__init__(self)
         self.mqtt_manager = mqtt_manager
+        self.loop = loop
 
-    async def handleNotification(self, cHandle, data):
+    async def handle_notification(self, cHandle, data):
         print("Received notification from handle: {}".format(data))
-        asyncio.run_coroutine_threadsafe(
-            self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data),
-            self.mqtt_manager.loop
-        )
+        # asyncio.run_coroutine_threadsafe(
+        #     self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data),
+        #     self.mqtt_manager.loop
+        # )
+        asyncio.run_coroutine_threadsafe(self.async_handle_notification(data), self.loop)
+
+    async def async_handle_notification(self, data):
+        # Now we're in async context, we can await coroutines
+        try:
+            await self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data)
+            print(f"Published data to {SENSOR_DATA_TOPIC}")
+        except Exception as e:
+            print(f"Failed to publish data: {e}")
 
 # BLE Manager with asyncio support
 class AsyncBLEManager:
@@ -88,7 +99,7 @@ class AsyncBLEManager:
                 print(4, addr)
                 self.peripheral = Peripheral(addr)
                 print(5)
-                notification_delegate = NotificationDelegate(self.mqtt_manager)
+                notification_delegate = NotificationDelegate(self.mqtt_manager, self.loop)
                 print(6)
                 self.peripheral.setDelegate(notification_delegate)
                 print(7)
