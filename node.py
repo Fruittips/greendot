@@ -13,9 +13,6 @@ aioble.config(mtu=512)
 # WIFI
 WIFI_SSID = "skku"
 WIFI_PASS = "skku1398"
-# WIFI_SSID = "Pixel_myd"
-# WIFI_PASS = "THEMAHYIDA"
-
 # MQTT
 MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
 _SENSOR_DATA_TOPIC = "greendot/sensor/data"
