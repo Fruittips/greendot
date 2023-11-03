@@ -39,7 +39,7 @@ class AsyncMQTTManager:
                             keyfile=KEYFILE_PATH,
                             tls_version=ssl.PROTOCOL_TLSv1_2)
         self.client.tls_insecure_set(False)
-        self.client.connect(broker_endpoint, port=1883)
+        self.client.connect(broker_endpoint, port=8883)
 
     async def publish(self, topic, message):
         result, mid = await self.loop.run_in_executor(None, self.client.publish, topic, message)
