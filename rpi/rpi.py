@@ -3,6 +3,8 @@ from bluepy.btle import Scanner, DefaultDelegate
 import paho.mqtt.client as mqtt
 import threading
 import time
+import ssl
+
 
 # MQTT and BLE Configuration
 WIFI_SSID = "skku"
@@ -17,11 +19,25 @@ FLAME_SENSOR_UUID = "00002A6A-0000-1000-8000-00805f9b34fb"
 TEMP_SENSOR_UUID = "00002A6B-0000-1000-8000-00805f9b34fb"
 AIR_SENSOR_UUID = "00002A6C-0000-1000-8000-00805f9b34fb"
 
+CA_CERTS_PATH = "./AmazonRootCA1.crt"  # Root CA certificate
+CERTFILE_PATH = "./device.pem.crt"  # Client certificate
+KEYFILE_PATH = "./private.pem.key"  # Private key
+
 # MQTT Manager
 class MQTTManager:
     def __init__(self, broker_endpoint):
         self.client = mqtt.Client()
-        self.client.connect(broker_endpoint)
+        # Configure TLS set
+        self.client.tls_set(ca_certs=CA_CERTS_PATH,
+                            certfile=CERTFILE_PATH,
+                            keyfile=KEYFILE_PATH,
+                            tls_version=ssl.PROTOCOL_TLSv1_2)
+
+        # TLS options
+        self.client.tls_insecure_set(False)  # Set to True if the broker's domain name does not match the certificate
+
+        # Connect with SSL/TLS
+        self.client.connect(broker_endpoint, port=8883)  # As
     
     def publish(self, topic, message):
         self.client.publish(topic, message)
