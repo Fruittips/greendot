@@ -1,8 +1,6 @@
 import asyncio
 from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID
 import paho.mqtt.client as mqtt
-import threading
-import time
 import ssl
 
 # MQTT and BLE Configuration
@@ -13,7 +11,6 @@ SENSOR_DATA_TOPIC = 'greendot/sensor/data'
 
 DEVICE_NAME_PREFIX = "GREENDOT-"
 GREENDOT_SERVICE_UUID = "0000181A-0000-1000-8000-00805f9b34fb"
-DATA_UUID = "00002A6A-0000-1000-8000-00805f9b34fb"
 FLAME_SENSOR_UUID = "00002A6A-0000-1000-8000-00805f9b34fb"
 TEMP_SENSOR_UUID = "00002A6B-0000-1000-8000-00805f9b34fb"
 AIR_SENSOR_UUID = "00002A6C-0000-1000-8000-00805f9b34fb"
@@ -64,9 +61,9 @@ class AsyncBLEManager:
         for dev in devices:
             for (adtype, desc, value) in dev.getScanData():
                 if value.startswith(self.device_name_prefix):
-                    # self.devices_to_connect.append(dev.addr)
+                    self.devices_to_connect.append(dev.addr)
                     print(f"Found BLE device with address: {dev.addr} {value}")
-                    await self.handle_device_connection(dev.addr)
+                    # await self.handle_device_connection(dev.addr)
 
     async def connect_and_listen(self):
         tasks = [self.loop.create_task(self.handle_device_connection(addr)) for addr in self.devices_to_connect]
@@ -98,7 +95,7 @@ class AsyncNodeManager:
 
     async def run(self):
         await self.ble_manager.scan_for_devices()
-        # await self.ble_manager.connect_and_listen()
+        await self.ble_manager.connect_and_listen()
 
 # Main execution with asyncio event loop
 async def main():
