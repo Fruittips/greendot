@@ -135,6 +135,7 @@ class AsyncBLEManager:
         print("Connecting to", addr, "...")
         while True:
             try:
+                print("TRYING HERE CONNECT HELLO")
                 self.connected_peripherals[addr] = Peripheral(addr)
                 self.connected_peripherals[addr].setMTU(MTU)
                 print("[CONNECTED] to", addr)
@@ -149,14 +150,13 @@ class AsyncBLEManager:
                                 await self.loop.run_in_executor(None, self.connected_peripherals[addr].writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
                                 while True:
                                     await self.loop.run_in_executor(None, self.connected_peripherals[addr].waitForNotifications, 1.0)
-                print("[AT BOTTOM LOOP]")
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
                 self.connected_peripherals.pop(addr, None)
                 print ("[DISCONNECTED] from ", addr)
                 print ("[RECONNECTING] to ", addr, "in 5 seconds...")
                 await asyncio.sleep(5)
-                self.handle_device_connection(addr)
+                await self.handle_device_connection(addr)
                 
     async def broadcast_to_peripherals (self, message):
         print("message to broadcast: ", message)
