@@ -106,20 +106,22 @@ class AsyncBLEManager:
         self.devices_to_connect = []
 
     async def scan_for_devices(self):
-        try: 
-            scanner = Scanner()
-            devices = await self.loop.run_in_executor(None, scanner.scan, 10.0)
-            for dev in devices:
-                for (adtype, desc, value) in dev.getScanData():
-                    if value.startswith(self.device_name_prefix):
-                        self.devices_to_connect.append(dev.addr)
-                        print(f"Found BLE device with address: {dev.addr} {value}")
-                        # await self.handle_device_connection(dev.addr)
-        except Exception as e:
-            print(f"Failed to scan for BLE devices: {e}")
-            # scan for devices again
-            await asyncio.sleep(5)
-            await self.scan_for_devices()
+        
+        while True:
+            try: 
+                scanner = Scanner()
+                devices = await self.loop.run_in_executor(None, scanner.scan, 10.0)
+                for dev in devices:
+                    for (adtype, desc, value) in dev.getScanData():
+                        if value.startswith(self.device_name_prefix):
+                            self.devices_to_connect.append(dev.addr)
+                            print(f"Found BLE device with address: {dev.addr} {value}")
+                break
+            except BTLEException as e:
+                print(f"[ERROR SCANNING]: {e}")
+                continue
+            except Exception as e:
+                print(f"Failed to scan for BLE devices: {e}")
 
     async def connect_and_listen(self):
         print(1)
