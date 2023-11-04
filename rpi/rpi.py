@@ -9,8 +9,6 @@ from awscrt import io, mqtt, auth, http
 from awsiot import mqtt_connection_builder
 
 # MQTT and BLE Configuration
-WIFI_SSID = "skku"
-WIFI_PASS = "skku1398"
 MTU = 512
 
 # ESP32 Configuration (Peripheral devices)
@@ -167,8 +165,7 @@ class AsyncBLEManager:
                         for char in characteristics:
                             if char.uuid == UUID(FLAME_PRESENCE_UUID):
                                 print("broadcasting to ", addr)
-                                await self.loop.run_in_executor(None, peripheral.writeCharacteristic, char.getHandle(), message)
-                                # enable notification
+                                await self.loop.run_in_executor(None, peripheral.writeCharacteristic, char.getHandle(), bytes(message, 'utf-8'))
             except Exception as e:
                 print(f"Failed to broadcast to {addr}: {e}")
                 await asyncio.sleep(2)
