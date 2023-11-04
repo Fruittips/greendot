@@ -13,6 +13,7 @@ from awsiot import mqtt_connection_builder
 # MQTT and BLE Configuration
 WIFI_SSID = "skku"
 WIFI_PASS = "skku1398"
+MTU = 512
 
 # ESP32 Configuration (Peripheral devices)
 DEVICE_NAME_PREFIX = "GREENDOT-"
@@ -83,10 +84,6 @@ class NotificationDelegate(DefaultDelegate):
 
     def handleNotification(self, cHandle, data):
         print("Received notification from handle: {} with data {}".format(cHandle,data))
-        # asyncio.run_coroutine_threadsafe(
-        #     self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data),
-        #     self.mqtt_manager.loop
-        # )
         asyncio.run_coroutine_threadsafe(self.async_handle_notification(data), self.loop)
 
     async def async_handle_notification(self, data):
@@ -134,6 +131,7 @@ class AsyncBLEManager:
             try:
                 print(4, addr)
                 self.peripheral = Peripheral(addr)
+                self.peripheral.setMTU(MTU)
                 print(5)
                 notification_delegate = NotificationDelegate(self.mqtt_manager, self.loop)
                 print(6)
@@ -152,7 +150,7 @@ class AsyncBLEManager:
                         print(11)
                         for char in characteristics:
                             print(12)
-                            if char.uuid in [UUID(FLAME_SENSOR_UUID), UUID(TEMP_SENSOR_UUID), UUID(AIR_SENSOR_UUID)]:
+                            if char.uuid in UUID(FLAME_SENSOR_UUID):
                                 print(13)
                                 await self.loop.run_in_executor(None, self.peripheral.writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
                                 print(14)

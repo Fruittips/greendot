@@ -31,8 +31,11 @@ _DEVICE_HIERARCHY = 0
 _NODE_ID = 0
 _DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_DEVICE_HIERARCHY) + "-" + "NODE-" + str(_NODE_ID)
 
+MTU=512
+
 class BlePeripheralManager:
     def __init__(self):
+        aioble.config(mtu=MTU)
         self.start_sending_event = asyncio.Event()
         self.connection_to_send_to = None
         self.devices_to_aggregate = {}
