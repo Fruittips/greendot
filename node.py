@@ -60,7 +60,7 @@ class BlePeripheralManager:
         print("Connection from", connection.device)
         self.connection_to_send_to = connection
         self.start_sending_event.set()
-        await connection.disconnected()
+        await connection.disconnected(timeout_ms=None)
         self.start_sending_event.clear()
         print("Disconnected. Restarting advertisement...")
 
