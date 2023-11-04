@@ -17,6 +17,7 @@ MTU = 512
 DEVICE_NAME_PREFIX = "GREENDOT-"
 GREENDOT_SERVICE_UUID = "0000181A-0000-1000-8000-00805f9b34fb"
 SENSOR_DATA_UUID = "00002A6A-0000-1000-8000-00805f9b34fb"
+FLAME_PRESENCE_UUID = "0000A1F3-0000-1000-8000-00805f9b34fb" #for broacasting flame presence
 
 # AWS IoT Client configuration
 CA_CERTS_PATH = "./certs/AmazonRootCA1.pem"  # Root CA certificate
@@ -26,6 +27,7 @@ KEYFILE_PATH = "./certs/private.pem.key"  # Private key
 MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
 CLIENT_ID = "GREENDOT-RPI"  # Name for the Thing in AWS IoT
 SENSOR_DATA_TOPIC = 'greendot/sensor/data'
+FLAME_PRESENCE_TOPIC = "greendot/status"
 
 
 # MQTT Manager with asyncio support
@@ -54,13 +56,26 @@ class AsyncMQTTManager:
             connect_future = mqtt_connection.connect()
             connect_future.result()
             print("Connected to MQTT broker!")
-        except BTLEException as e:
-            print(f"[ERROR SCANNING]: {e}")
+            
+            subscribe_future = mqtt_connection.subscribe(FLAME_PRESENCE_TOPIC, mqtt.QoS.AT_LEAST_ONCE, self._subscribe_callback) #todo: update callback
+            suback_packet = subscribe_future.result()
+            print("Subscribed to topic: " + FLAME_PRESENCE_TOPIC + " with QoS: " + format(suback_packet.reason_codes))
+        except Exception as e:
+            print(f"Error connecting or subscribing MQTT: {e}")
+        
         return mqtt_connection
         
     def publish(self, topic, message):
         self.client.publish(topic, json.dumps(message), mqtt.QoS.AT_LEAST_ONCE)
         print("Published: '" + json.dumps(message) + "' to the topic: " + SENSOR_DATA_TOPIC + " for client: " + CLIENT_ID)
+    
+    def attach_ble_manager(self, ble_manager):
+        self.ble_manager = ble_manager
+    
+    def _subscribe_callback(self, topic, payload):
+        print("Received message from topic '{}': {}".format(topic, payload))
+        asyncio.run_coroutine_threadsafe(self.ble_manager.broadcast_to_peripherals(payload.decode()), self.loop)
+
 
 # BLE Delegate to handle Notifications
 class NotificationDelegate(DefaultDelegate):
@@ -120,9 +135,7 @@ class AsyncBLEManager:
         print("Connecting to", addr)
         while True:
             try:
-                # self.connected_peripherals[addr] = await self.loop.run_in_executor(None, Peripheral, addr)
                 self.connected_peripherals[addr] = Peripheral(addr)
-                # self.peripheral = Peripheral(addr)
                 self.connected_peripherals[addr].setMTU(MTU)
                 notification_delegate = NotificationDelegate(self.mqtt_manager, self.loop)
                 self.connected_peripherals[addr].setDelegate(notification_delegate)
@@ -137,7 +150,25 @@ class AsyncBLEManager:
                                     await self.loop.run_in_executor(None, self.connected_peripherals[addr].waitForNotifications, 1.0)
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
+                self.connected_peripherals.pop(addr, None)
                 await asyncio.sleep(5)
+                
+    async def broadcast_to_peripherals (self, message):
+        for addr, peripheral in self.connected_peripherals.items():
+            try:
+                # retrieve flam characteristic handle
+                services = await self.loop.run_in_executor(None, peripheral.getServices)
+                for service in services:
+                    if service.uuid == UUID(GREENDOT_SERVICE_UUID):
+                        characteristics = await self.loop.run_in_executor(None, service.getCharacteristics)
+                        for char in characteristics:
+                            if char.uuid == UUID(FLAME_PRESENCE_UUID):
+                                # write to characteristic handle
+                                await self.loop.run_in_executor(None, peripheral.writeCharacteristic, char.getHandle(), message)
+                                # enable notification
+            except Exception as e:
+                print(f"Failed to broadcast to {addr}: {e}")
+                await asyncio.sleep(2)
 
 # Node Manager with asyncio support
 class AsyncNodeManager:
@@ -154,6 +185,7 @@ async def main():
     loop = asyncio.get_running_loop()
     mqtt_manager = AsyncMQTTManager(MQTT_BROKER_ENDPOINT, CLIENT_ID, loop)
     ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
+    ble_manager.attach_mqtt_manager(mqtt_manager)
     node_manager = AsyncNodeManager(ble_manager, mqtt_manager)
     await node_manager.run()
     

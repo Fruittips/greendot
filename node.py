@@ -9,6 +9,7 @@ aioble.config(mtu=512)
 # BLE
 _GREENDOT_SERVICE_UUID = bluetooth.UUID(0x181A)
 _DATA_UUID = bluetooth.UUID(0x2A6A)
+_FLAME_PRESENCE_UUID = bluetooth.UUID(0xA1F3)
 _ADV_INTERVAL_MS = 250_000
 
 # Shared
