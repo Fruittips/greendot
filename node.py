@@ -15,6 +15,10 @@ _DEVICE_NAME_PREFIX = "GREENDOT-"
 _NODE_ID = 0
 _DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_NODE_ID)
 
+# Sensor data
+_SAMPLING_INTERVAL_LOW = 10
+_SAMPLING_INTERVAL_HIGH = 1
+
 MTU=512
 
 class BlePeripheralManager:
@@ -22,7 +26,7 @@ class BlePeripheralManager:
         aioble.config(mtu=MTU)
         self.start_sending_event = asyncio.Event()
         self.connection_to_send_to = None
-        self.sampling_interval = 5
+        self.sampling_interval = _SAMPLING_INTERVAL_LOW
         self.greendot_service = aioble.Service(_GREENDOT_SERVICE_UUID)
         self.data_characteristic = aioble.Characteristic(self.greendot_service, _DATA_UUID, read=True, write=True, notify=True)
         self.flame_presence_characteristic = aioble.Characteristic(self.greendot_service, _FLAME_PRESENCE_UUID, read=True, write=True, notify=True, capture=True)
@@ -86,6 +90,13 @@ class BlePeripheralManager:
                 if len(flame_presence_data) > 0:
                     flame_presence = self.__decode_json_data(self.flame_presence_characteristic.read())
                     print("Flame presence characteristic value:",flame_presence)
+                    if flame_presence["status"] == "1": # if there is flame present, decrease sampling interval
+                        print("Flame detected. Increasing sampling interval.")
+                        self.sampling_interval = _SAMPLING_INTERVAL_HIGH
+                    elif flame_presence["status"] == "0":
+                        print("No flame detected. Decreasing sampling interval.")
+                        self.sampling_interval = _SAMPLING_INTERVAL_LOW
+                    
                 await asyncio.sleep(1)
             except Exception as e:
                 print("Error listening to flame presence characteristic:", e)
