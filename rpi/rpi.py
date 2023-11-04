@@ -150,7 +150,7 @@ class AsyncBLEManager:
                         print(11)
                         for char in characteristics:
                             print(12)
-                            if char.uuid in UUID(FLAME_SENSOR_UUID):
+                            if char.uuid == UUID(FLAME_SENSOR_UUID):
                                 print(13)
                                 await self.loop.run_in_executor(None, self.peripheral.writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
                                 print(14)
