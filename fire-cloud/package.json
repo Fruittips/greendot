@@ -1,0 +1,17 @@
+{
+  "name": "fire-cloud",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "aws-iot-device-sdk-v2": "^1.16.2",
+    "dotenv": "^16.3.1"
+  }
+}
