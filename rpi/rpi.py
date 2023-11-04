@@ -66,14 +66,11 @@ class AsyncMQTTManager:
         return mqtt_connection
         
 
-    def publish(self, topic, message):
+    async def publish(self, topic, message):
         print("line 70, data", message)
         print('Publishing message to topic: ' + topic + ' with message: ' + json.dumps(message) + ' for client: ' + CLIENT_ID + '...')
-        self.client.publish(topic, json.dumps(message), mqtt.QoS.AT_LEAST_ONCE)
-        # result, mid = self.loop.run_in_executor(None, self.client.publish, topic, message, mqtt.QoS.AT_LEAST_ONCE)
+        await self.client.publish(topic, json.dumps(message), mqtt.QoS.AT_LEAST_ONCE)
         print("Published: '" + json.dumps(message) + "' to the topic: " + SENSOR_DATA_TOPIC + " for client: " + CLIENT_ID)
-        # print(result)
-        # return result
 
 
 
@@ -96,7 +93,7 @@ class NotificationDelegate(DefaultDelegate):
         # Now we're in async context, we can await coroutines
         try:
             data = struct.unpack('<h', data)[0]
-            self.mqtt_manager.publish(SENSOR_DATA_TOPIC,data)
+            await self.mqtt_manager.publish(SENSOR_DATA_TOPIC,data)
         except Exception as e:
             print(f"Failed to publish data: {e}")
 
@@ -119,7 +116,6 @@ class AsyncBLEManager:
                     # await self.handle_device_connection(dev.addr)
 
     async def connect_and_listen(self):
-        # toggle_wifi(False)
         print(1)
         tasks = [self.loop.create_task(self.handle_device_connection(addr)) for addr in self.devices_to_connect]
         print(2)
@@ -178,42 +174,6 @@ async def main():
     ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
     node_manager = AsyncNodeManager(ble_manager, mqtt_manager)
     await node_manager.run()
-    
-    #TODO: move this to class
-    # Spin up resources
-    # event_loop_group = io.EventLoopGroup(1)
-    # host_resolver = io.DefaultHostResolver(event_loop_group)
-    # client_bootstrap = io.ClientBootstrap(event_loop_group, host_resolver)
-    # mqtt_connection = mqtt_connection_builder.mtls_from_path(
-    #             endpoint=MQTT_BROKER_ENDPOINT,
-    #             cert_filepath=CERTFILE_PATH,
-    #             pri_key_filepath=KEYFILE_PATH,
-    #             client_bootstrap=client_bootstrap,
-    #             ca_filepath=CA_CERTS_PATH,
-    #             client_id=CLIENT_ID,
-    #             clean_session=False,
-    #             keep_alive_secs=6
-    #             )
-    # print("Connecting to {} with client ID '{}'...".format(
-    #         MQTT_BROKER_ENDPOINT, CLIENT_ID))
-
-    # # Make the connect() call
-    # connect_future = mqtt_connection.connect()
-    # # Future.result() waits until a result is available
-    # connect_future.result()
-    # print("Connected!")
-    # # Publish message to server desired number of times.
-    # print('Begin Publish')
-    # for i in range (5):
-    #     data = "{} [{}]".format("test message", i+1)
-    #     message = {"message" : data}
-    #     mqtt_connection.publish(topic=SENSOR_DATA_TOPIC, payload=json.dumps(message), qos=mqtt.QoS.AT_LEAST_ONCE)
-    #     print("Published: '" + json.dumps(message) + "' to the topic: " + SENSOR_DATA_TOPIC + " for client: " + CLIENT_ID)
-    #     t.sleep(1)
-    # print('Publish End')
-    # disconnect_future = mqtt_connection.disconnect()
-    # disconnect_future.result()
-    
     
 
 if __name__ == "__main__":
