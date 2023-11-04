@@ -156,6 +156,7 @@ class AsyncBLEManager:
                 print ("[DISCONNECTED] from ", addr)
                 print ("[RECONNECTING] to ", addr, "in 5 seconds...")
                 await asyncio.sleep(5)
+                self.handle_device_connection(addr)
                 
     async def broadcast_to_peripherals (self, message):
         print("message to broadcast: ", message)
