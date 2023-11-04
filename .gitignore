@@ -1,2 +1,3 @@
 rpi/cloud/*
 node_modules
+.env

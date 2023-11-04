@@ -29,11 +29,9 @@ if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_API_KEY)
 
-function convertEpochToSGT(epochTime) {
+function convertEpochToUTC(epochTime) {
   const date = new Date(epochTime * 1000);
-  const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
-  const singaporeTime = new Date(utc + (3600000 * TIMEZONE_OFFSET));
-  return singaporeTime.toISOString();
+  return date.toISOString();
 }
 
 function establishConnection() {
@@ -64,7 +62,7 @@ async function connectAndSubscribe() {
         console.log(`Message received on ${topic}:`, messageJson);
         let {error} = await supabase.from('firecloud').insert({
           node_id: messageJson.id,
-          timestamp: convertEpochToSGT(messageJson.timestamp),
+          timestamp: convertEpochToUTC(messageJson.timestamp),
           temperature: messageJson.temp,
           humidity: messageJson.humidity,
           air_quality_ppm: messageJson.air,
