@@ -19,6 +19,10 @@ _DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_NODE_ID)
 _SAMPLING_INTERVAL_LOW = 10
 _SAMPLING_INTERVAL_HIGH = 5
 
+# Frequencies
+_FREQ_HIGH = 160000000 # 160 MHz
+_FREQ_LOW = 80000000 # 80 MHz
+
 MTU=512
 
 class BlePeripheralManager:
@@ -33,6 +37,7 @@ class BlePeripheralManager:
         aioble.register_services(self.greendot_service)
 
     async def run(self):
+        machine.freq(_FREQ_LOW) # set clock frequency
         await asyncio.gather(
             asyncio.create_task(self.__advertise()),
             asyncio.create_task(self.__notify_sensor_data()),
@@ -95,11 +100,16 @@ class BlePeripheralManager:
                     flame_presence = self.__decode_json_data(self.flame_presence_characteristic.read())
                     print("Flame presence characteristic value:",flame_presence)
                     if flame_presence["status"] == "1": # if there is flame present, decrease sampling interval
-                        print("Flame detected. Increasing sampling interval.")
+                        print("Flame detected. Increasing sampling interval and clock frequency.")
                         self.sampling_interval = _SAMPLING_INTERVAL_HIGH
+                        machine.freq(_FREQ_HIGH) 
+                        print(f"Sampling interval: {self.sampling_interval} seconds", f"Clock frequency: {machine.freq()}")
                     elif flame_presence["status"] == "0":
-                        print("No flame detected. Decreasing sampling interval.")
+                        print("No flame detected. Decreasing sampling interval and clock frequency.")
                         self.sampling_interval = _SAMPLING_INTERVAL_LOW
+                        machine.freq(_FREQ_LOW)
+                        print(f"Sampling interval: {self.sampling_interval} seconds", f"Clock frequency: {machine.freq()}")
+
                     
                 await asyncio.sleep(1)
             except Exception as e:
