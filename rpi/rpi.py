@@ -156,19 +156,19 @@ class AsyncBLEManager:
             
             except BTLEDisconnectError as e:
                 print(f"Connection to {addr} lost: {e}")
-                await self.cleanup_peripheral(addr)
+                self.cleanup_peripheral(addr)
                 await self.attempt_reconnection(addr)
             
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
-                await self.cleanup_peripheral(addr)
+                self.cleanup_peripheral(addr)
                 await self.attempt_reconnection(addr)
     
-    async def cleanup_peripheral(self, addr):
+    def cleanup_peripheral(self, addr):
         peripheral = self.connected_peripherals.pop(addr, None)
         if peripheral:
             peripheral._stopHelper()
-            await peripheral.disconnect()
+            peripheral.disconnect()
         print("[DISCONNECTED] from", addr)
                 
     async def attempt_reconnection(self, addr):
