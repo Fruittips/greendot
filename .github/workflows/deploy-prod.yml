@@ -43,19 +43,19 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:firecloud_${{github.run_number}} .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:firecloud_${{github.run_number}}
 
-    - name: Replace image in dockerrun file
+    - name: Replace image in docker compose file
       env:
         ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
         ECR_REPOSITORY_URI: ${{ env.ECR_REPOSITORY_URI }}
       run: |
-        cp Dockerrun.prod.aws.json Dockerrun.aws.json
-        sed -i "s/<ECR_REGISTRY>/$ECR_REPOSITORY_URI/g" Dockerrun.aws.json
-        sed -i "s/<SERVER_NAME>/$ECR_REPOSITORY/g" Dockerrun.aws.json
-        sed -i "s/<TAG>/firecloud_${{github.run_number}}/g" Dockerrun.aws.json
+        cp docker-compose.prod.yml docker-compose.yml
+        sed -i "s/<ECR_REGISTRY>/$ECR_REPOSITORY_URI/g" docker-compose.yml
+        sed -i "s/<SERVER_NAME>/$ECR_REPOSITORY/g" docker-compose.yml
+        sed -i "s/<TAG>/firecloud_${{github.run_number}}/g" docker-compose.yml
 
-    - name: Zip the dockerrun file
+    - name: Zip the docker compose file
       run: |
-        zip deploy.zip Dockerrun.aws.json
+        zip deploy.zip docker-compose.yml
 
     - name: Upload zip to S3
       env:
