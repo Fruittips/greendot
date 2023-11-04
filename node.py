@@ -57,16 +57,18 @@ class BlePeripheralManager:
             while self.start_sending_event.is_set():
                 print("Sending sensor data...")
                 # TODO: Get sensor data
-                temp_sensor_data = 1000.999
-                flame_sensor_data = 2000.999
-                air_sensor_data = 3000.999
+                temp_sensor_data = 125.0
+                flame_sensor_data = 1
+                air_sensor_data = 9495.56732
+                humidity_sensor_data = 100.0
 
                 await self.__notify(
                     self.__encode_json_data({
                         'id': _NODE_ID,
                         'temp': temp_sensor_data,
                         'flame': flame_sensor_data,
-                        'air': air_sensor_data
+                        'air': air_sensor_data,
+                        'humidity': humidity_sensor_data,
                     })
                 )
 
