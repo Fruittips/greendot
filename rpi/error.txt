@@ -1,0 +1,34 @@
+Connecting to a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com with client ID 'GREENDOT-RPI'...
+Connected to MQTT broker!
+Traceback (most recent call last):
+  File "/home/yida/Desktop/greendot/rpi/rpi.py", line 188, in <module>
+    asyncio.run(main())
+  File "/usr/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/yida/Desktop/greendot/rpi/rpi.py", line 184, in main
+    await node_manager.run()
+  File "/home/yida/Desktop/greendot/rpi/rpi.py", line 175, in run
+    await self.ble_manager.scan_for_devices()
+  File "/home/yida/Desktop/greendot/rpi/rpi.py", line 113, in scan_for_devices
+    devices = await self.loop.run_in_executor(None, scanner.scan, 10.0)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yida/Desktop/greendot/rpi/cloud/lib/python3.11/site-packages/bluepy/btle.py", line 854, in scan
+    self.stop()
+  File "/home/yida/Desktop/greendot/rpi/cloud/lib/python3.11/site-packages/bluepy/btle.py", line 803, in stop
+    self._mgmtCmd(self._cmd()+"end")
+  File "/home/yida/Desktop/greendot/rpi/cloud/lib/python3.11/site-packages/bluepy/btle.py", line 309, in _mgmtCmd
+    rsp = self._waitResp('mgmt')
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yida/Desktop/greendot/rpi/cloud/lib/python3.11/site-packages/bluepy/btle.py", line 362, in _waitResp
+    raise BTLEDisconnectError("Device disconnected", resp)
+bluepy.btle.BTLEDisconnectError: Device disconnected
