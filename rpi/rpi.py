@@ -117,8 +117,9 @@ class AsyncBLEManager:
                         # await self.handle_device_connection(dev.addr)
         except Exception as e:
             print(f"Failed to scan for BLE devices: {e}")
-        except BTLEException as e:
-            print(f"[ERROR SCANNING]: {e}")
+            # scan for devices again
+            await asyncio.sleep(5)
+            await self.scan_for_devices()
 
     async def connect_and_listen(self):
         print(1)
