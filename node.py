@@ -4,8 +4,6 @@ import uasyncio as asyncio
 import aioble
 import json
 
-aioble.config(mtu=512)
-
 # BLE
 _GREENDOT_SERVICE_UUID = bluetooth.UUID(0x181A)
 _DATA_UUID = bluetooth.UUID(0x2A6A)
@@ -84,9 +82,11 @@ class BlePeripheralManager:
     async def __listen_to_flame_presence(self):
         while True:
             try:
-                _, flame_presence_data = await self.flame_presence_characteristic.written()
-                # flame_presence = self.__decode_json_data(flame_presence_data)
-                print("Flame presence characteristic value:",flame_presence_data)
+                _, flame_presence_data = await self.flame_presence_characteristic.written()                
+                if len(flame_presence_data) > 0:
+                    flame_presence = self.__decode_json_data(self.flame_presence_characteristic.read())
+                    print("Flame presence characteristic value:",flame_presence)
+                await asyncio.sleep(1)
             except Exception as e:
                 print("Error listening to flame presence characteristic:", e)
                 await asyncio.sleep(5)
