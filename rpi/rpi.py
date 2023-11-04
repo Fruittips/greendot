@@ -58,8 +58,6 @@ class AsyncMQTTManager:
         return mqtt_connection
         
     def publish(self, topic, message):
-        print("line 70, data", message)
-        print('Publishing message to topic: ' + topic + ' with message: ' + json.dumps(message) + ' for client: ' + CLIENT_ID + '...')
         self.client.publish(topic, json.dumps(message), mqtt.QoS.AT_LEAST_ONCE)
         print("Published: '" + json.dumps(message) + "' to the topic: " + SENSOR_DATA_TOPIC + " for client: " + CLIENT_ID)
 
@@ -76,9 +74,7 @@ class NotificationDelegate(DefaultDelegate):
 
     async def async_handle_notification(self, data):
         try:
-            print("96 [BEFORE DECODE] ESP32:", data)
             data = self.__decode_json_data(data)
-            print("98 [AFTER DECODE] ESP32:", data)
             self.mqtt_manager.publish(SENSOR_DATA_TOPIC,data)
         except Exception as e:
             print(f"Failed to publish data: {e}")
@@ -118,7 +114,6 @@ class AsyncBLEManager:
 
     async def handle_device_connection(self, addr):
         print("Connecting to", addr)
-        print(3)
         while True:
             try:
                 self.peripheral = Peripheral(addr)
