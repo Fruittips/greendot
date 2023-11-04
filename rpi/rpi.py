@@ -57,9 +57,10 @@ class AsyncMQTTManager:
             connect_future.result()
             print("Connected to MQTT broker!")
             
+            print("Subscribing to topic '{}'...".format(FLAME_PRESENCE_TOPIC))
             subscribe_future = mqtt_connection.subscribe(FLAME_PRESENCE_TOPIC, mqtt.QoS.AT_LEAST_ONCE, self._subscribe_callback) #todo: update callback
-            suback_packet = subscribe_future.result()
-            print("Subscribed to topic: " + FLAME_PRESENCE_TOPIC + " with QoS: " + format(suback_packet.reason_codes))
+            print(subscribe_future)
+            print("Subscribed to topic: " + FLAME_PRESENCE_TOPIC)
         except Exception as e:
             print(f"Error connecting or subscribing MQTT: {e}")
         
