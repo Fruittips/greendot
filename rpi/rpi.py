@@ -185,7 +185,7 @@ class AsyncBLEManager:
     async def cleanup_peripheral(self, addr):
         peripheral = self.connected_peripherals.pop(addr, None)
         if peripheral:
-            await self.loop.run_in_executor(None, peripheral.disconnect)
+            await peripheral.disconnect()
         print("[DISCONNECTED] from", addr)
                 
     async def attempt_reconnection(self, addr):
