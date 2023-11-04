@@ -6,6 +6,10 @@ import ssl
 import json
 import struct
 
+from awscrt import io, mqtt, auth, http
+from awsiot import mqtt_connection_builder
+import time as t
+
 # MQTT and BLE Configuration
 WIFI_SSID = "skku"
 WIFI_PASS = "skku1398"
@@ -19,19 +23,13 @@ FLAME_SENSOR_UUID = "00002A6A-0000-1000-8000-00805f9b34fb"
 TEMP_SENSOR_UUID = "00002A6B-0000-1000-8000-00805f9b34fb"
 AIR_SENSOR_UUID = "00002A6C-0000-1000-8000-00805f9b34fb"
 
-# CA_CERTS_PATH = "./AmazonRootCA3.pem"  # Root CA certificate
-# CERTFILE_PATH = "./device.pem.crt"  # Client certificate
-# KEYFILE_PATH = "./private.pem.key"  # Private key
+CA_CERTS_PATH = "./certs/AmazonRootCA1.pem"  # Root CA certificate
+CERTFILE_PATH = "./certs/device.pem.crt"  # Client certificate
+KEYFILE_PATH = "./certs/private.pem.key"  # Private key
 
-CA_CERTS_PATH = "./AwsRootCA1.pem"  # Root CA certificate
-CERTFILE_PATH = "./awsdevice.pem.crt"  # Client certificate
-KEYFILE_PATH = "./awsprivate.pem.key"  # Private key
+# Define ENDPOINT, CLIENT_ID, PATH_TO_CERTIFICATE, PATH_TO_PRIVATE_KEY, PATH_TO_AMAZON_ROOT_CA_1, MESSAGE, TOPIC, and RANGE
+CLIENT_ID = "testDevice"
 
-def toggle_wifi(state):
-    os.system(f"sudo ifconfig wlan0 {'up' if state else 'down'}")
-
-def toggle_bluetooth(state):
-    os.system(f"sudo systemctl {'start' if state else 'stop'} bluetooth")
 
 # MQTT Manager with asyncio support
 class AsyncMQTTManager:
@@ -47,6 +45,8 @@ class AsyncMQTTManager:
 
     async def publish(self, topic, message):
         result, mid = await self.loop.run_in_executor(None, self.client.publish, topic, message)
+        print(result)
+        
         return result
 
 
@@ -149,11 +149,48 @@ class AsyncNodeManager:
 
 # Main execution with asyncio event loop
 async def main():
-    loop = asyncio.get_running_loop()
-    mqtt_manager = AsyncMQTTManager(MQTT_BROKER_ENDPOINT, loop)
-    ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
-    node_manager = AsyncNodeManager(ble_manager, mqtt_manager)
-    await node_manager.run()
+    # loop = asyncio.get_running_loop()
+    # mqtt_manager = AsyncMQTTManager(MQTT_BROKER_ENDPOINT, loop)
+    # ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
+    # node_manager = AsyncNodeManager(ble_manager, mqtt_manager)
+    # await node_manager.run()
+    
+    #TODO: move this to class
+    # Spin up resources
+    event_loop_group = io.EventLoopGroup(1)
+    host_resolver = io.DefaultHostResolver(event_loop_group)
+    client_bootstrap = io.ClientBootstrap(event_loop_group, host_resolver)
+    mqtt_connection = mqtt_connection_builder.mtls_from_path(
+                endpoint=MQTT_BROKER_ENDPOINT,
+                cert_filepath=CERTFILE_PATH,
+                pri_key_filepath=KEYFILE_PATH,
+                client_bootstrap=client_bootstrap,
+                ca_filepath=CA_CERTS_PATH,
+                client_id=CLIENT_ID,
+                clean_session=False,
+                keep_alive_secs=6
+                )
+    print("Connecting to {} with client ID '{}'...".format(
+            MQTT_BROKER_ENDPOINT, CLIENT_ID))
+
+    # Make the connect() call
+    connect_future = mqtt_connection.connect()
+    # Future.result() waits until a result is available
+    connect_future.result()
+    print("Connected!")
+    # Publish message to server desired number of times.
+    print('Begin Publish')
+    for i in range (5):
+        data = "{} [{}]".format("test message", i+1)
+        message = {"message" : data}
+        mqtt_connection.publish(topic=SENSOR_DATA_TOPIC, payload=json.dumps(message), qos=mqtt.QoS.AT_LEAST_ONCE)
+        print("Published: '" + json.dumps(message) + "' to the topic: " + "'test/testing'")
+        t.sleep(1)
+    print('Publish End')
+    disconnect_future = mqtt_connection.disconnect()
+    disconnect_future.result()
+    
+    
 
 if __name__ == "__main__":
     asyncio.run(main())
