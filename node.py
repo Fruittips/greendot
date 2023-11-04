@@ -27,14 +27,16 @@ class BlePeripheralManager:
         self.sampling_interval = 5
         self.greendot_service = aioble.Service(_GREENDOT_SERVICE_UUID)
         self.data_characteristic = aioble.Characteristic(self.greendot_service, _DATA_UUID, read=True, write=True, notify=True)
+        self.flame_presence_characteristic = aioble.Characteristic(self.greendot_service, _FLAME_PRESENCE_UUID, read=True, write=True, notify=True)
         aioble.register_services(self.greendot_service)
 
     async def run(self):
         await asyncio.gather(
             asyncio.create_task(self.__advertise()),
             asyncio.create_task(self.__notify_sensor_data()),
+            asyncio.create_task(self.__listen_to_flame_presence())
         )
-
+        
     async def __advertise(self):
         while True:
             print("Starting advertisement...")
@@ -81,6 +83,13 @@ class BlePeripheralManager:
     
     def __encode_json_data(self, data):
         return json.dumps(data).encode('utf-8')
+    
+    async def __listen_to_flame_presence(self):
+        while True:
+            flame_presence_data = await self.flame_presence_characteristic.written()
+            print("Flame presence:", flame_presence_data)
+            # TODO: process data here
+
 class Node:
     def __init__(self):
         self.bt_node = BlePeripheralManager()
