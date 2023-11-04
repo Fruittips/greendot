@@ -89,6 +89,7 @@ class AsyncBLEManager:
         self.device_name_prefix = device_name_prefix
         self.mqtt_manager = mqtt_manager
         self.devices_to_connect = []
+        self.connected_peripherals = {}
 
     async def scan_for_devices(self):
         while True:
@@ -116,19 +117,21 @@ class AsyncBLEManager:
         print("Connecting to", addr)
         while True:
             try:
-                self.peripheral = Peripheral(addr)
-                self.peripheral.setMTU(MTU)
+                # self.connected_peripherals[addr] = await self.loop.run_in_executor(None, Peripheral, addr)
+                self.connected_peripherals[addr] = Peripheral(addr)
+                # self.peripheral = Peripheral(addr)
+                self.connected_peripherals[addr].setMTU(MTU)
                 notification_delegate = NotificationDelegate(self.mqtt_manager, self.loop)
-                self.peripheral.setDelegate(notification_delegate)
-                services = await self.loop.run_in_executor(None, self.peripheral.getServices)
+                self.connected_peripherals[addr].setDelegate(notification_delegate)
+                services = await self.loop.run_in_executor(None, self.connected_peripherals[addr].getServices)
                 for service in services:
                     if service.uuid == UUID(GREENDOT_SERVICE_UUID):
                         characteristics = await self.loop.run_in_executor(None, service.getCharacteristics)
                         for char in characteristics:
                             if char.uuid == UUID(SENSOR_DATA_UUID):
-                                await self.loop.run_in_executor(None, self.peripheral.writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
+                                await self.loop.run_in_executor(None, self.connected_peripherals[addr].writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
                                 while True:
-                                    await self.loop.run_in_executor(None, self.peripheral.waitForNotifications, 1.0)
+                                    await self.loop.run_in_executor(None, self.connected_peripherals[addr].waitForNotifications, 1.0)
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
                 await asyncio.sleep(5)
