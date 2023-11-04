@@ -150,7 +150,7 @@ class AsyncNodeManager:
         await self.ble_manager.connect_and_listen()
 
 # Main execution with asyncio event loop
-async def main():
+def main():
     # loop = asyncio.get_running_loop()
     # mqtt_manager = AsyncMQTTManager(MQTT_BROKER_ENDPOINT, loop)
     # ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
@@ -195,5 +195,5 @@ async def main():
     
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
     
