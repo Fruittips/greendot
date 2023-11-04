@@ -92,7 +92,7 @@ class NotificationDelegate(DefaultDelegate):
             # data = struct.unpack('<h', data)[0]
             print("96 [BEFORE DECODE] ESP32:", data)
             data = self.__decode_json_data(data)
-            print("98 [BEFORE DECODE] ESP32:", data)
+            print("98 [AFTER DECODE] ESP32:", data)
             self.mqtt_manager.publish(SENSOR_DATA_TOPIC,data)
         except Exception as e:
             print(f"Failed to publish data: {e}")
