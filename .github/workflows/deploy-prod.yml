@@ -48,7 +48,7 @@ jobs:
         ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
         ECR_REPOSITORY_URI: ${{ env.ECR_REPOSITORY_URI }}
       run: |
-        cp Dockerrun.aws.json Dockerrun.aws.json
+        cp Dockerrun.prod.aws.json Dockerrun.aws.json
         sed -i "s/<ECR_REGISTRY>/$ECR_REPOSITORY_URI/g" Dockerrun.aws.json
         sed -i "s/<SERVER_NAME>/$ECR_REPOSITORY/g" Dockerrun.aws.json
         sed -i "s/<TAG>/firecloud_${{github.run_number}}/g" Dockerrun.aws.json
