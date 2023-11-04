@@ -95,7 +95,7 @@ class NotificationDelegate(DefaultDelegate):
         # Now we're in async context, we can await coroutines
         try:
             data = struct.unpack('<h', data)[0]
-            await self.mqtt_manager.publish(SENSOR_DATA_TOPIC,data)
+            self.mqtt_manager.publish(SENSOR_DATA_TOPIC,data)
         except Exception as e:
             print(f"Failed to publish data: {e}")
 
