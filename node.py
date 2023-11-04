@@ -17,7 +17,7 @@ _DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_NODE_ID)
 
 # Sensor data
 _SAMPLING_INTERVAL_LOW = 10
-_SAMPLING_INTERVAL_HIGH = 1
+_SAMPLING_INTERVAL_HIGH = 5
 
 MTU=512
 
@@ -58,24 +58,28 @@ class BlePeripheralManager:
 
     async def __notify_sensor_data(self):
         while True:
-            await self.start_sending_event.wait()
-            while self.start_sending_event.is_set():
-                print("Sending sensor data...")
-                # TODO: Get sensor data
-                temp_sensor_data = 125.0
-                flame_sensor_data = 1
-                air_sensor_data = 9495.56732
-                humidity_sensor_data = 100.0
-
-                await self.__notify(
-                    self.__encode_json_data({
-                        'id': _NODE_ID,
-                        'temp': temp_sensor_data,
-                        'flame': flame_sensor_data,
-                        'air': air_sensor_data,
-                        'humidity': humidity_sensor_data,
-                    })
-                )
+            try:
+                await self.start_sending_event.wait()
+                while self.start_sending_event.is_set():
+                    print("Sending sensor data...")
+                    # TODO: Get sensor data
+                    temp_sensor_data = 125.0
+                    flame_sensor_data = 1
+                    air_sensor_data = 9495.56732
+                    humidity_sensor_data = 100.0
+                    await self.__notify(
+                        self.__encode_json_data({
+                            'id': _NODE_ID,
+                            'temp': temp_sensor_data,
+                            'flame': flame_sensor_data,
+                            'air': air_sensor_data,
+                            'humidity': humidity_sensor_data,
+                        })
+                    )
+            except Exception as e:
+                print("Error sending sensor data:", e)
+                await asyncio.sleep(5)
+            
 
     async def __notify(self, data):
         self.data_characteristic.write(data)

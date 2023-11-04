@@ -137,7 +137,7 @@ class AsyncBLEManager:
             try:
                 self.connected_peripherals[addr] = Peripheral(addr)
                 self.connected_peripherals[addr].setMTU(MTU)
-                print("Connected to", addr)
+                print("[CONNECTED] to", addr)
                 notification_delegate = NotificationDelegate(self.mqtt_manager, self.loop)
                 self.connected_peripherals[addr].setDelegate(notification_delegate)
                 services = await self.loop.run_in_executor(None, self.connected_peripherals[addr].getServices)
@@ -149,10 +149,13 @@ class AsyncBLEManager:
                                 await self.loop.run_in_executor(None, self.connected_peripherals[addr].writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
                                 while True:
                                     await self.loop.run_in_executor(None, self.connected_peripherals[addr].waitForNotifications, 1.0)
-                print("AT BOTTOM LOOP")
+                print("[AT BOTTOM LOOP]")
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
+                self.connected_peripherals[addr].disconnect()
                 self.connected_peripherals.pop(addr, None)
+                print ("[DISCONNECTED] from ", addr)
+                print ("[RECONNECTING] to ", addr, "in 5 seconds...")
                 await asyncio.sleep(5)
                 
     async def broadcast_to_peripherals (self, message):
