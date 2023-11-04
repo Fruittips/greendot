@@ -56,19 +56,18 @@ class AsyncMQTTManager:
             connect_future = mqtt_connection.connect()
             connect_future.result()
             print("Connected to MQTT broker!")
-            
-            print("Subscribing to topic '{}'...".format(FLAME_PRESENCE_TOPIC))
-            subscribe_future = mqtt_connection.subscribe(FLAME_PRESENCE_TOPIC, mqtt.QoS.AT_LEAST_ONCE, self._subscribe_callback) #todo: update callback
-            print(subscribe_future)
-            print("Subscribed to topic: " + FLAME_PRESENCE_TOPIC)
         except Exception as e:
             print(f"Error connecting or subscribing MQTT: {e}")
-        
+            
         return mqtt_connection
         
     def publish(self, topic, message):
         self.client.publish(topic, json.dumps(message), mqtt.QoS.AT_LEAST_ONCE)
         print("Published: '" + json.dumps(message) + "' to the topic: " + SENSOR_DATA_TOPIC + " for client: " + CLIENT_ID)
+        
+    async def subscribe(self):
+        print("Subscribing to topic '{}'...".format(FLAME_PRESENCE_TOPIC))
+        await self.client.subscribe(FLAME_PRESENCE_TOPIC, mqtt.QoS.AT_LEAST_ONCE, self._subscribe_callback)
     
     def attach_ble_manager(self, ble_manager):
         self.ble_manager = ble_manager
@@ -77,6 +76,7 @@ class AsyncMQTTManager:
         print("Received message from topic '{}': {}".format(topic, payload))
         asyncio.run_coroutine_threadsafe(self.ble_manager.broadcast_to_peripherals(payload.decode()), self.loop)
 
+    
 
 # BLE Delegate to handle Notifications
 class NotificationDelegate(DefaultDelegate):
@@ -155,6 +155,7 @@ class AsyncBLEManager:
                 await asyncio.sleep(5)
                 
     async def broadcast_to_peripherals (self, message):
+        print("message to broadcast: ", message)
         for addr, peripheral in self.connected_peripherals.items():
             try:
                 # retrieve flam characteristic handle
@@ -164,7 +165,7 @@ class AsyncBLEManager:
                         characteristics = await self.loop.run_in_executor(None, service.getCharacteristics)
                         for char in characteristics:
                             if char.uuid == UUID(FLAME_PRESENCE_UUID):
-                                # write to characteristic handle
+                                print("broadcasting to ", addr)
                                 await self.loop.run_in_executor(None, peripheral.writeCharacteristic, char.getHandle(), message)
                                 # enable notification
             except Exception as e:
@@ -188,6 +189,7 @@ async def main():
     ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
     mqtt_manager.attach_ble_manager(ble_manager)
     node_manager = AsyncNodeManager(ble_manager, mqtt_manager)
+    await mqtt_manager.subscribe()
     await node_manager.run()
     
 
