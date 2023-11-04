@@ -29,7 +29,7 @@ CERTFILE_PATH = "./certs/device.pem.crt"  # Client certificate
 KEYFILE_PATH = "./certs/private.pem.key"  # Private key
 
 # Define ENDPOINT, CLIENT_ID, PATH_TO_CERTIFICATE, PATH_TO_PRIVATE_KEY, PATH_TO_AMAZON_ROOT_CA_1, MESSAGE, TOPIC, and RANGE
-CLIENT_ID = "testDevice"
+CLIENT_ID = "GREENDOT-RPI"
 
 
 # MQTT Manager with asyncio support
@@ -150,7 +150,7 @@ CLIENT_ID = "testDevice"
 #         await self.ble_manager.connect_and_listen()
 
 # Main execution with asyncio event loop
-def main():
+async def main():
     # loop = asyncio.get_running_loop()
     # mqtt_manager = AsyncMQTTManager(MQTT_BROKER_ENDPOINT, loop)
     # ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
@@ -186,7 +186,7 @@ def main():
         data = "{} [{}]".format("test message", i+1)
         message = {"message" : data}
         mqtt_connection.publish(topic=SENSOR_DATA_TOPIC, payload=json.dumps(message), qos=mqtt.QoS.AT_LEAST_ONCE)
-        print("Published: '" + json.dumps(message) + "' to the topic: " + "'test/testing'")
+        print("Published: '" + json.dumps(message) + "' to the topic: " + SENSOR_DATA_TOPIC + " for client: " + CLIENT_ID)
         t.sleep(1)
     print('Publish End')
     disconnect_future = mqtt_connection.disconnect()
@@ -195,5 +195,4 @@ def main():
     
 
 if __name__ == "__main__":
-    main()
-    
+    asyncio.run(main())
