@@ -3,6 +3,7 @@ import asyncio
 from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID, BTLEDisconnectError, BTLEException
 import paho.mqtt.client as mqtt
 import json
+import time
 
 from awscrt import io, mqtt, auth, http
 from awsiot import mqtt_connection_builder
@@ -75,6 +76,8 @@ class NotificationDelegate(DefaultDelegate):
     async def async_handle_notification(self, data):
         try:
             data = self.__decode_json_data(data)
+            #add current time
+            data['timestamp'] = time.time()
             self.mqtt_manager.publish(SENSOR_DATA_TOPIC,data)
         except Exception as e:
             print(f"Failed to publish data: {e}")
