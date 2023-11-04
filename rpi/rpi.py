@@ -165,6 +165,7 @@ class AsyncBLEManager:
                         for char in characteristics:
                             if char.uuid == UUID(FLAME_PRESENCE_UUID):
                                 print("broadcasting to ", addr)
+                                print ("bytes message is this RPI",bytes(message, 'utf-8'))
                                 await self.loop.run_in_executor(None, peripheral.writeCharacteristic, char.getHandle(), bytes(message, 'utf-8'))
             except Exception as e:
                 print(f"Failed to broadcast to {addr}: {e}")
