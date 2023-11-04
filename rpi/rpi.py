@@ -1,6 +1,6 @@
 import os
 import asyncio
-from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID, BTLEDisconnectError
+from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID, BTLEDisconnectError, BTLEException
 import paho.mqtt.client as mqtt
 import ssl
 import json
@@ -59,11 +59,8 @@ class AsyncMQTTManager:
             connect_future = mqtt_connection.connect()
             connect_future.result()
             print("Connected to MQTT broker!")
-        except Exception as e:
-            print(f"Failed to connect to MQTT broker: {e}")
-            # print("Retrying in 5 seconds...")
-            # time.sleep(5)
-            # self._establish_connection()
+        except BTLEException as e:
+            print(f"[ERROR SCANNING]: {e}")
         return mqtt_connection
         
 
@@ -109,14 +106,20 @@ class AsyncBLEManager:
         self.devices_to_connect = []
 
     async def scan_for_devices(self):
-        scanner = Scanner()
-        devices = await self.loop.run_in_executor(None, scanner.scan, 10.0)
-        for dev in devices:
-            for (adtype, desc, value) in dev.getScanData():
-                if value.startswith(self.device_name_prefix):
-                    self.devices_to_connect.append(dev.addr)
-                    print(f"Found BLE device with address: {dev.addr} {value}")
-                    # await self.handle_device_connection(dev.addr)
+        try: 
+            scanner = Scanner()
+            devices = await self.loop.run_in_executor(None, scanner.scan, 10.0)
+            for dev in devices:
+                for (adtype, desc, value) in dev.getScanData():
+                    if value.startswith(self.device_name_prefix):
+                        self.devices_to_connect.append(dev.addr)
+                        print(f"Found BLE device with address: {dev.addr} {value}")
+                        # await self.handle_device_connection(dev.addr)
+        except Exception as e:
+            print(f"Failed to scan for BLE devices: {e}")
+            # print("Retrying in 5 seconds...")
+            # time.sleep(5)
+            # self.scan_for_devices()
 
     async def connect_and_listen(self):
         print(1)
