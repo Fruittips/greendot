@@ -51,18 +51,21 @@ class BlePeripheralManager:
         )
 
     async def __advertise(self):
-        print("Starting advertisement...")
-        connection = await aioble.advertise(
-            _ADV_INTERVAL_MS,
-            name=_DEVICE_NAME,
-            services=[_GREENDOT_SERVICE_UUID],
-        )
-        print("Connection from", connection.device)
-        self.connection_to_send_to = connection
-        self.start_sending_event.set()
-        await connection.disconnected(timeout_ms=None)
-        self.start_sending_event.clear()
-        print("Disconnected. Restarting advertisement...")
+        while True:
+            print("Starting advertisement...")
+            connection = await aioble.advertise(
+                _ADV_INTERVAL_MS,
+                name=_DEVICE_NAME,
+                services=[_GREENDOT_SERVICE_UUID],
+            )
+            print("Connection from", connection.device)
+            self.connection_to_send_to = connection
+            self.start_sending_event.set()
+            # await connection.disconnected(timeout_ms=None) # waits for a disconnect to happen
+            while connection.is_connected() == True:
+                    await asyncio.sleep(5)
+            self.start_sending_event.clear()
+            print("Disconnected. Restarting advertisement...")
 
     async def __notify_sensor_data(self):
         while True:
