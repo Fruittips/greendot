@@ -131,15 +131,6 @@ class AsyncBLEManager:
         tasks = [self.loop.create_task(self.handle_device_connection(addr)) for addr in self.devices_to_connect]
         await asyncio.gather(*tasks)
 
-    async def attempt_reconnection(self, addr):
-        while True:
-            try:
-                print ("[RECONNECTING] to ", addr, "in 5 seconds...")
-                await asyncio.sleep(5)
-                await self.handle_device_connection(addr)
-            except Exception as e:
-                print(f"Failed to reconnect to {addr}: {e}")
-                continue
 
     async def handle_device_connection(self, addr):
         while True:
@@ -162,13 +153,13 @@ class AsyncBLEManager:
             
             except BTLEDisconnectError as e:
                 print(f"Connection to {addr} lost: {e}")
-                print("BTLE ERROR")
-                await asyncio.sleep(5)
+                await self.cleanup_peripheral(addr)
+                await self.attempt_reconnection(addr)
             
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
-                self.connected_peripherals.pop(addr, None)
-                await asyncio.sleep(5)
+                await self.cleanup_peripheral(addr)
+                await self.attempt_reconnection(addr)
                 
     async def broadcast_to_peripherals (self, message):
         print("message to broadcast: ", message)
@@ -187,6 +178,18 @@ class AsyncBLEManager:
             except Exception as e:
                 print(f"Failed to broadcast to {addr}: {e}")
                 await asyncio.sleep(2)
+    
+    async def cleanup_peripheral(self, addr):
+        peripheral = self.connected_peripherals.pop(addr, None)
+        if peripheral:
+            await self.loop.run_in_executor(None, peripheral.disconnect)
+        print("[DISCONNECTED] from", addr)
+                
+    async def attempt_reconnection(self, addr):
+        print(f"[RECONNECTING] to {addr} in 5 seconds...")
+        await asyncio.sleep(5)
+        await self.handle_device_connection(addr)
+
 
 # Node Manager with asyncio support
 class AsyncNodeManager:
