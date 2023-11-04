@@ -1,35 +1,20 @@
 import machine
-import network
 import bluetooth
-import umqtt.simple
-import time
 import uasyncio as asyncio
 import aioble
-import struct
 import json
 
 aioble.config(mtu=512)
 
-# WIFI
-WIFI_SSID = "skku"
-WIFI_PASS = "skku1398"
-# MQTT
-MQTT_BROKER_ENDPOINT = "a3dhth9kymg9gk-ats.iot.ap-southeast-1.amazonaws.com"
-_SENSOR_DATA_TOPIC = "greendot/sensor/data"
-
 # BLE
 _GREENDOT_SERVICE_UUID = bluetooth.UUID(0x181A)
 _DATA_UUID = bluetooth.UUID(0x2A6A)
-_FLAME_SENSOR_UUID = bluetooth.UUID(0x2A6A)
-_TEMP_SENSOR_UUID = bluetooth.UUID(0x2A6B)
-_AIR_SENSOR_UUID = bluetooth.UUID(0x2A6C)
 _ADV_INTERVAL_MS = 250_000
 
 # Shared
 _DEVICE_NAME_PREFIX = "GREENDOT-"
-_DEVICE_HIERARCHY = 0
 _NODE_ID = 0
-_DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_DEVICE_HIERARCHY) + "-" + "NODE-" + str(_NODE_ID)
+_DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_NODE_ID)
 
 MTU=512
 
@@ -38,7 +23,6 @@ class BlePeripheralManager:
         aioble.config(mtu=MTU)
         self.start_sending_event = asyncio.Event()
         self.connection_to_send_to = None
-        self.devices_to_aggregate = {}
         self.sampling_interval = 5
         self.greendot_service = aioble.Service(_GREENDOT_SERVICE_UUID)
         self.data_characteristic = aioble.Characteristic(self.greendot_service, _DATA_UUID, read=True, write=True, notify=True)
@@ -102,7 +86,5 @@ class Node:
         print("starting")
         await asyncio.create_task(self.bt_node.run())
                 
-
-print("Hello world")
 node = Node()
 asyncio.run(node.start())
