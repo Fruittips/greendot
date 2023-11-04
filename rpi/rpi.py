@@ -131,11 +131,19 @@ class AsyncBLEManager:
         tasks = [self.loop.create_task(self.handle_device_connection(addr)) for addr in self.devices_to_connect]
         await asyncio.gather(*tasks)
 
-    async def handle_device_connection(self, addr):
-        print("Connecting to", addr, "...")
+    async def attempt_reconnection(self, addr):
         while True:
             try:
-                print("TRYING HERE CONNECT HELLO")
+                print ("[RECONNECTING] to ", addr, "in 5 seconds...")
+                await asyncio.sleep(5)
+                await self.handle_device_connection(addr)
+            except Exception as e:
+                print(f"Failed to reconnect to {addr}: {e}")
+                continue
+
+    async def handle_device_connection(self, addr):
+        while True:
+            try:
                 self.connected_peripherals[addr] = Peripheral(addr)
                 self.connected_peripherals[addr].setMTU(MTU)
                 print("[CONNECTED] to", addr)
@@ -149,14 +157,18 @@ class AsyncBLEManager:
                             if char.uuid == UUID(SENSOR_DATA_UUID):
                                 await self.loop.run_in_executor(None, self.connected_peripherals[addr].writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
                                 while True:
-                                    await self.loop.run_in_executor(None, self.connected_peripherals[addr].waitForNotifications, 1.0)
+                                    if not await self.loop.run_in_executor(None, self.connected_peripherals[addr].waitForNotifications, 1.0):
+                                        raise BTLEDisconnectError("Notification timeout")
+            
+            except BTLEDisconnectError as e:
+                print(f"Connection to {addr} lost: {e}")
+                print("BTLE ERROR")
+                await asyncio.sleep(5)
+            
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
                 self.connected_peripherals.pop(addr, None)
-                print ("[DISCONNECTED] from ", addr)
-                print ("[RECONNECTING] to ", addr, "in 5 seconds...")
                 await asyncio.sleep(5)
-                await self.handle_device_connection(addr)
                 
     async def broadcast_to_peripherals (self, message):
         print("message to broadcast: ", message)
