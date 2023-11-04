@@ -65,9 +65,9 @@ class AsyncMQTTManager:
         self.client.publish(topic, json.dumps(message), mqtt.QoS.AT_LEAST_ONCE)
         print("Published: '" + json.dumps(message) + "' to the topic: " + SENSOR_DATA_TOPIC + " for client: " + CLIENT_ID)
         
-    async def subscribe(self):
+    def subscribe(self):
         print("Subscribing to topic '{}'...".format(FLAME_PRESENCE_TOPIC))
-        await self.client.subscribe(FLAME_PRESENCE_TOPIC, mqtt.QoS.AT_LEAST_ONCE, self._subscribe_callback)
+        self.client.subscribe(FLAME_PRESENCE_TOPIC, mqtt.QoS.AT_LEAST_ONCE, self._subscribe_callback)
     
     def attach_ble_manager(self, ble_manager):
         self.ble_manager = ble_manager
@@ -189,7 +189,7 @@ async def main():
     ble_manager = AsyncBLEManager(DEVICE_NAME_PREFIX, mqtt_manager, loop)
     mqtt_manager.attach_ble_manager(ble_manager)
     node_manager = AsyncNodeManager(ble_manager, mqtt_manager)
-    await mqtt_manager.subscribe()
+    mqtt_manager.subscribe()
     await node_manager.run()
     
 
