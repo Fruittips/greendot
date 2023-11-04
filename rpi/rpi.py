@@ -82,7 +82,7 @@ class NotificationDelegate(DefaultDelegate):
         self.loop = loop
 
     def handleNotification(self, cHandle, data):
-        print("Received notification from handle: {}".format(data))
+        print("Received notification from handle: {} with data {}".format(cHandle,data))
         # asyncio.run_coroutine_threadsafe(
         #     self.mqtt_manager.publish(SENSOR_DATA_TOPIC, data),
         #     self.mqtt_manager.loop
