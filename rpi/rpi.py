@@ -163,6 +163,18 @@ class AsyncBLEManager:
                 print(f"Connection to {addr} failed: {e}")
                 await self.cleanup_peripheral(addr)
                 await self.attempt_reconnection(addr)
+    
+    async def cleanup_peripheral(self, addr):
+        peripheral = self.connected_peripherals.pop(addr, None)
+        if peripheral:
+            peripheral._stopHelper()
+            await peripheral.disconnect()
+        print("[DISCONNECTED] from", addr)
+                
+    async def attempt_reconnection(self, addr):
+        print(f"[RECONNECTING] to {addr} in 5 seconds...")
+        await asyncio.sleep(5)
+        await self.handle_device_connection(addr)
                 
     async def broadcast_to_peripherals (self, message):
         print("message to broadcast: ", message)
@@ -182,17 +194,6 @@ class AsyncBLEManager:
                 print(f"Failed to broadcast to {addr}: {e}")
                 await asyncio.sleep(2)
     
-    async def cleanup_peripheral(self, addr):
-        peripheral = self.connected_peripherals.pop(addr, None)
-        if peripheral:
-            await peripheral.disconnect()
-        print("[DISCONNECTED] from", addr)
-                
-    async def attempt_reconnection(self, addr):
-        print(f"[RECONNECTING] to {addr} in 5 seconds...")
-        await asyncio.sleep(5)
-        await self.handle_device_connection(addr)
-
 
 # Node Manager with asyncio support
 class AsyncNodeManager:
