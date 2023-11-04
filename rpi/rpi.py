@@ -126,6 +126,7 @@ class AsyncBLEManager:
         print("2 end")
 
     async def handle_device_connection(self, addr):
+        print("Connecting to", addr)
         print(3)
         while True:
             try:
