@@ -69,7 +69,7 @@ class AsyncMQTTManager:
     async def publish(self, topic, message):
         print("line 70, data", message)
         print('Publishing message to topic: ' + topic + ' with message: ' + json.dumps(message) + ' for client: ' + CLIENT_ID + '...')
-        result, mid = await self.loop.run_in_executor(None, self.client.publish, topic, message, qos=mqtt.QoS.AT_LEAST_ONCE)
+        result, mid = await self.loop.run_in_executor(None, self.client.publish, topic, message, mqtt.QoS.AT_LEAST_ONCE)
         print("Published: '" + json.dumps(message) + "' to the topic: " + SENSOR_DATA_TOPIC + " for client: " + CLIENT_ID)
         print(result)
         return result
