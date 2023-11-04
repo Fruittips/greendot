@@ -1,6 +1,6 @@
 import os
 import asyncio
-from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID
+from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID, BTLEDisconnectError
 import paho.mqtt.client as mqtt
 import ssl
 import json
@@ -159,6 +159,9 @@ class AsyncBLEManager:
                                     await self.loop.run_in_executor(None, self.peripheral.waitForNotifications, 1.0)
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
+                await asyncio.sleep(5)
+            except BTLEDisconnectError as err:
+                print(f"Except block caught Connection to {addr} disconnected: {err}")
                 await asyncio.sleep(5)
 
 # Node Manager with asyncio support
