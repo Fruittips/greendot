@@ -148,8 +148,11 @@ class AsyncBLEManager:
                             if char.uuid == UUID(SENSOR_DATA_UUID):
                                 await self.loop.run_in_executor(None, self.connected_peripherals[addr].writeCharacteristic, char.getHandle() + 1, b"\x01\x00")
                                 while True:
-                                    if not await self.loop.run_in_executor(None, self.connected_peripherals[addr].waitForNotifications, 1.0):
-                                        raise BTLEDisconnectError("Notification timeout")
+                                    try:
+                                        await self.loop.run_in_executor(None, self.connected_peripherals[addr].waitForNotifications, 1.0)
+                                    except Exception as e:
+                                        print(f"Failed to wait for notifications: {e}")
+                                        raise Exception
             
             except BTLEDisconnectError as e:
                 print(f"Connection to {addr} lost: {e}")
