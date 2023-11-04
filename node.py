@@ -27,7 +27,7 @@ class BlePeripheralManager:
         self.sampling_interval = 5
         self.greendot_service = aioble.Service(_GREENDOT_SERVICE_UUID)
         self.data_characteristic = aioble.Characteristic(self.greendot_service, _DATA_UUID, read=True, write=True, notify=True)
-        self.flame_presence_characteristic = aioble.Characteristic(self.greendot_service, _FLAME_PRESENCE_UUID, read=True, write=True, notify=True)
+        self.flame_presence_characteristic = aioble.Characteristic(self.greendot_service, _FLAME_PRESENCE_UUID, read=True, write=True, notify=True, capture=True)
         aioble.register_services(self.greendot_service)
 
     async def run(self):
@@ -81,15 +81,22 @@ class BlePeripheralManager:
         print("Sent sensor data")
         await asyncio.sleep(self.sampling_interval)
     
-    def __encode_json_data(self, data):
-        return json.dumps(data).encode('utf-8')
-    
     async def __listen_to_flame_presence(self):
         while True:
-            flame_presence_data = await self.flame_presence_characteristic.written()
-            print("Flame presence:", flame_presence_data)
-            # TODO: process data here
+            try:
+                _, flame_presence_data = await self.flame_presence_characteristic.written()
+                # flame_presence = self.__decode_json_data(flame_presence_data)
+                print("Flame presence characteristic value:",flame_presence_data)
+            except Exception as e:
+                print("Error listening to flame presence characteristic:", e)
+                await asyncio.sleep(5)
+    
+    def __encode_json_data(self, data):
+        return json.dumps(data).encode('utf-8')
 
+    def __decode_json_data(self, data):
+        return json.loads(data.decode('utf-8'))
+    
 class Node:
     def __init__(self):
         self.bt_node = BlePeripheralManager()
