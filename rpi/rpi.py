@@ -152,7 +152,6 @@ class AsyncBLEManager:
                 print("[AT BOTTOM LOOP]")
             except Exception as e:
                 print(f"Connection to {addr} failed: {e}")
-                self.connected_peripherals[addr].disconnect()
                 self.connected_peripherals.pop(addr, None)
                 print ("[DISCONNECTED] from ", addr)
                 print ("[RECONNECTING] to ", addr, "in 5 seconds...")
