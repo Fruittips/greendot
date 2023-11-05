@@ -1,11 +1,9 @@
-import os
 import asyncio
 from bluepy.btle import Scanner, DefaultDelegate, Peripheral, UUID, BTLEDisconnectError, BTLEException
-import paho.mqtt.client as mqtt
 import json
 import time
 
-from awscrt import io, mqtt, auth, http
+from awscrt import io, mqtt
 from awsiot import mqtt_connection_builder
 
 # MQTT and BLE Configuration
@@ -15,7 +13,7 @@ MTU = 512
 DEVICE_NAME_PREFIX = "GREENDOT-"
 GREENDOT_SERVICE_UUID = "0000181A-0000-1000-8000-00805f9b34fb"
 SENSOR_DATA_UUID = "00002A6A-0000-1000-8000-00805f9b34fb"
-FLAME_PRESENCE_UUID = "0000A1F3-0000-1000-8000-00805f9b34fb" #for broacasting flame presence
+FLAME_PRESENCE_UUID = "0000A1F3-0000-1000-8000-00805f9b34fb"
 
 # AWS IoT Client configuration
 CA_CERTS_PATH = "./certs/AmazonRootCA1.pem"  # Root CA certificate
@@ -28,7 +26,6 @@ SENSOR_DATA_TOPIC = 'greendot/sensor/data'
 FLAME_PRESENCE_TOPIC = "greendot/status"
 
 
-# MQTT Manager with asyncio support
 class AsyncMQTTManager:
     def __init__(self, broker_endpoint, client_id, loop):
         self.loop = loop
@@ -86,12 +83,11 @@ class NotificationDelegate(DefaultDelegate):
 
     def handleNotification(self, cHandle, data):
         print("Received notification from handle: {} with data {}".format(cHandle,data))
-        asyncio.run_coroutine_threadsafe(self.async_handle_notification(data), self.loop)
+        asyncio.run_coroutine_threadsafe(self._async_handle_notification(data), self.loop)
 
-    async def async_handle_notification(self, data):
+    async def _async_handle_notification(self, data):
         try:
             data = self.__decode_json_data(data)
-            #add current time
             data['timestamp'] = time.time()
             self.mqtt_manager.publish(SENSOR_DATA_TOPIC,data)
         except Exception as e:
@@ -180,22 +176,19 @@ class AsyncBLEManager:
         print("message to broadcast: ", message)
         for addr, peripheral in self.connected_peripherals.items():
             try:
-                # retrieve flam characteristic handle
                 services = await self.loop.run_in_executor(None, peripheral.getServices)
                 for service in services:
                     if service.uuid == UUID(GREENDOT_SERVICE_UUID):
                         characteristics = await self.loop.run_in_executor(None, service.getCharacteristics)
                         for char in characteristics:
                             if char.uuid == UUID(FLAME_PRESENCE_UUID):
-                                print("broadcasting to ", addr)
-                                print ("bytes message is this RPI",bytes(message, 'utf-8'))
+                                print(f"broadcasting to {addr} with message {message}")
                                 await self.loop.run_in_executor(None, peripheral.writeCharacteristic, char.getHandle(), bytes(message, 'utf-8'))
             except Exception as e:
                 print(f"Failed to broadcast to {addr}: {e}")
                 await asyncio.sleep(2)
     
 
-# Node Manager with asyncio support
 class AsyncNodeManager:
     def __init__(self, ble_manager, mqtt_manager):
         self.ble_manager = ble_manager
@@ -205,7 +198,6 @@ class AsyncNodeManager:
         await self.ble_manager.scan_for_devices()
         await self.ble_manager.connect_and_listen()
 
-# Main execution with asyncio event loop
 async def main():
     loop = asyncio.get_running_loop()
     mqtt_manager = AsyncMQTTManager(MQTT_BROKER_ENDPOINT, CLIENT_ID, loop)
