@@ -48,14 +48,17 @@ class AsyncMQTTManager:
                 )
         
         print("Connecting to {} with client ID '{}'...".format(broker_endpoint, client_id))
-        try:
-            connect_future = mqtt_connection.connect()
-            connect_future.result()
-            print("Connected to MQTT broker!")
-        except Exception as e:
-            print(f"Error connecting or subscribing MQTT: {e}")
-            
-        return mqtt_connection
+        while True:
+            try:
+                connect_future = mqtt_connection.connect()
+                connect_future.result()
+                print("Connected to MQTT broker!")
+                return mqtt_connection
+            except Exception as e:
+                print(f"Error connecting or subscribing MQTT: {e}")
+                print("Retrying connection... in 2 seconds")
+                time.sleep(2)
+                
         
     def publish(self, topic, message):
         self.client.publish(topic, json.dumps(message), mqtt.QoS.AT_LEAST_ONCE)
