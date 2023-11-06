@@ -113,6 +113,7 @@ class AsyncBLEManager:
     async def scan_for_devices(self):
         while True:
             try: 
+                print("Scanning for BLE devices...")
                 scanner = Scanner()
                 devices = await self.loop.run_in_executor(None, scanner.scan, 10.0)
                 for dev in devices:
