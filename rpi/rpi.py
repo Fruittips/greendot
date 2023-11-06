@@ -67,6 +67,8 @@ class AsyncMQTTManager:
     def subscribe(self):
         print("Subscribing to topic '{}'...".format(FLAME_PRESENCE_TOPIC))
         self.client.subscribe(FLAME_PRESENCE_TOPIC, mqtt.QoS.AT_LEAST_ONCE, self._subscribe_callback)
+        print("[SUCCESS] subscribed to topic '{}'".format(FLAME_PRESENCE_TOPIC))
+
         
     def attach_ble_manager(self, ble_manager):
         self.ble_manager = ble_manager
@@ -121,9 +123,13 @@ class AsyncBLEManager:
                 break
             except BTLEException as e:
                 print(f"[ERROR SCANNING]: {e}")
+                print ("Retrying in 1 seconds...")
+                asyncio.sleep(1)
                 continue
             except Exception as e:
                 print(f"Failed to scan for BLE devices: {e}")
+                print ("Retrying in 1 seconds...")
+                asyncio.sleep(1)
                 continue
 
     async def connect_and_listen(self):
