@@ -124,12 +124,12 @@ class AsyncBLEManager:
             except BTLEException as e:
                 print(f"[ERROR SCANNING]: {e}")
                 print ("Retrying in 1 seconds...")
-                asyncio.sleep(1)
+                await asyncio.sleep(1)
                 continue
             except Exception as e:
                 print(f"Failed to scan for BLE devices: {e}")
                 print ("Retrying in 1 seconds...")
-                asyncio.sleep(1)
+                await asyncio.sleep(1)
                 continue
 
     async def connect_and_listen(self):
