@@ -23,6 +23,5 @@ class SensorsManager:
             print("Error getting temperature and humidity:", e)
             return None, None
     
-    def get_air_quality(self):
-        temperature, humidity = self.get_temp_humidity()
+    def get_air_quality(self, temperature, humidity):
         return self.air_sensor.get_corrected_ppm(temperature, humidity)
