@@ -14,7 +14,7 @@ MTU=512
 
 # Shared
 _DEVICE_NAME_PREFIX = "GREENDOT-"
-_NODE_ID = 0
+_NODE_ID = 1
 _DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_NODE_ID)
 
 # Sampling intervals
@@ -27,7 +27,7 @@ _FREQ_LOW = 80000000 # 80 MHz
 
 # Sensors
 _FLAME_PIN = 4
-_TEMP_HUMIDITY_PIN = 2
+_TEMP_HUMIDITY_PIN = 5
 _AIR_PIN = 15
 
 
@@ -73,9 +73,19 @@ class BlePeripheralManager:
                 await self.start_sending_event.wait()
                 while self.start_sending_event.is_set():
                     
+                    print("trying to read sensor values....")
+                    
                     air_reading = self.sensors_manager.get_air_quality()
+                    print("1")
                     temp_humidity_reading = self.sensors_manager.get_temp_humidity()
+                    print("2")
                     flame_reading = self.sensors_manager.get_flame_presence()
+                    print("3")
+                    
+                    print("Air quality:", air_reading , type(air_reading))
+                    print("Temperature:", temp_humidity_reading[0], type(temp_humidity_reading[0]))
+                    print("Humidity:", temp_humidity_reading[1], type(temp_humidity_reading[1]))
+                    print("Flame presence:", flame_reading, type(flame_reading))
                     
                     await self.__notify(
                         self.__encode_json_data({

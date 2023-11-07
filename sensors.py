@@ -14,8 +14,14 @@ class SensorsManager:
         return self.flame_sensor.value()
     
     def get_temp_humidity(self):
-        self.temp_humidity_sensor.measure()
-        return self.temp_humidity_sensor.temperature(), self.temp_humidity_sensor.humidity()
+        try:
+            self.temp_humidity_sensor.measure()
+            temp = self.temp_humidity_sensor.temperature()
+            humidity = self.temp_humidity_sensor.humidity()
+            return temp , humidity
+        except Exception as e:
+            print("Error getting temperature and humidity:", e)
+            return None, None
     
     def get_air_quality(self):
         temperature, humidity = self.get_temp_humidity()
