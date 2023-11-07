@@ -1,0 +1,22 @@
+import dht
+import machine
+import mq135
+
+class SensorsManager:
+    def __init__(self, flame_pin, temp_humidity_pin, air_pin):
+        print("Initialising sensors manager...")
+        self.flame_sensor = machine.Pin(flame_pin, machine.Pin.IN)
+        self.temp_humidity_sensor = dht.DHT22(machine.Pin(temp_humidity_pin, machine.Pin.IN))
+        self.air_sensor = mq135.MQ135(machine.Pin(air_pin, machine.Pin.IN))
+        print("Initialised sensors manager")
+    
+    def get_flame_presence(self):
+        return self.flame_sensor.value()
+    
+    def get_temp_humidity(self):
+        self.temp_humidity_sensor.measure()
+        return self.temp_humidity_sensor.temperature(), self.temp_humidity_sensor.humidity()
+    
+    def get_air_quality(self):
+        temperature, humidity = self.get_temp_humidity()
+        return self.air_sensor.get_corrected_ppm(temperature, humidity)

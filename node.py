@@ -3,19 +3,21 @@ import bluetooth
 import uasyncio as asyncio
 import aioble
 import json
+from sensors import SensorsManager
 
 # BLE
 _GREENDOT_SERVICE_UUID = bluetooth.UUID(0x181A)
 _DATA_UUID = bluetooth.UUID(0x2A6A)
 _FLAME_PRESENCE_UUID = bluetooth.UUID(0xA1F3)
 _ADV_INTERVAL_MS = 250_000
+MTU=512
 
 # Shared
 _DEVICE_NAME_PREFIX = "GREENDOT-"
 _NODE_ID = 0
 _DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_NODE_ID)
 
-# Sensor data
+# Sampling intervals
 _SAMPLING_INTERVAL_LOW = 10
 _SAMPLING_INTERVAL_HIGH = 5
 
@@ -23,7 +25,11 @@ _SAMPLING_INTERVAL_HIGH = 5
 _FREQ_HIGH = 160000000 # 160 MHz
 _FREQ_LOW = 80000000 # 80 MHz
 
-MTU=512
+# Sensors
+_FLAME_PIN = 4
+_TEMP_HUMIDITY_PIN = 2
+_AIR_PIN = 15
+
 
 class BlePeripheralManager:
     def __init__(self):
@@ -35,6 +41,7 @@ class BlePeripheralManager:
         self.data_characteristic = aioble.Characteristic(self.greendot_service, _DATA_UUID, read=True, write=True, notify=True)
         self.flame_presence_characteristic = aioble.Characteristic(self.greendot_service, _FLAME_PRESENCE_UUID, read=True, write=True, notify=True, capture=True)
         aioble.register_services(self.greendot_service)
+        self.sensors_manager = SensorsManager(_FLAME_PIN, _TEMP_HUMIDITY_PIN, _AIR_PIN)
 
     async def run(self):
         machine.freq(_FREQ_LOW) # set clock frequency
@@ -65,19 +72,18 @@ class BlePeripheralManager:
             try:
                 await self.start_sending_event.wait()
                 while self.start_sending_event.is_set():
-                    print("Sending sensor data...")
-                    # TODO: Get sensor data
-                    temp_sensor_data = 125.0
-                    flame_sensor_data = 1
-                    air_sensor_data = 9495.56732
-                    humidity_sensor_data = 100.0
+                    
+                    air_reading = self.sensors_manager.get_air_quality()
+                    temp_humidity_reading = self.sensors_manager.get_temp_humidity()
+                    flame_reading = self.sensors_manager.get_flame_presence()
+                    
                     await self.__notify(
                         self.__encode_json_data({
                             'id': _NODE_ID,
-                            'temp': temp_sensor_data,
-                            'flame': flame_sensor_data,
-                            'air': air_sensor_data,
-                            'humidity': humidity_sensor_data,
+                            'air': air_reading,
+                            'temp': temp_humidity_reading[0],
+                            'humidity': temp_humidity_reading[1],
+                            'flame': flame_reading(),
                         })
                     )
             except Exception as e:
@@ -86,9 +92,13 @@ class BlePeripheralManager:
             
 
     async def __notify(self, data):
+        print("Sending sensor data...")
+        print(f"Sending {data} to {self.connection_to_send_to}")
+        
         self.data_characteristic.write(data)
         self.data_characteristic.notify(self.connection_to_send_to)
         print("Sent sensor data")
+        
         await asyncio.sleep(self.sampling_interval)
     
     async def __listen_to_flame_presence(self):
