@@ -1,24 +1,24 @@
-version: '3'
+version: "3"
 
 services:
-  firecloud:
-      image: "<ECR_REGISTRY>/<SERVER_NAME>:<TAG>"
-      restart: always
-      expose:
-        - "3001"
-      ports:
-        - "3001:3001"
-      command: "node index.js"
-  
-  grafana:
-    image: grafana/grafana-oss:latest
-    restart: always
-    ports:
-      - "80:3000"
-    volumes:
-      - grafana-storage:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=greendot
-      - GF_USERS_ALLOW_SIGN_UP=false
+    firecloud:
+        image: "<ECR_REGISTRY>/<SERVER_NAME>:<TAG>"
+        restart: always
+        expose:
+            - "3001"
+        ports:
+            - "3001:3001"
+        command: "node index.js"
+
+    grafana:
+        image: grafana/grafana-oss:latest
+        restart: always
+        ports:
+            - "80:3000"
+        volumes:
+            - grafana-mounted-storage:/var/lib/storage/grafana
+        environment:
+            - GF_SECURITY_ADMIN_PASSWORD=greendot
+            - GF_USERS_ALLOW_SIGN_UP=false
 volumes:
-  grafana-storage:
+    grafana-mounted-storage:
