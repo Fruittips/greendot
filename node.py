@@ -75,17 +75,9 @@ class BlePeripheralManager:
                     
                     print("trying to read sensor values....")
                     
-                    air_reading = self.sensors_manager.get_air_quality()
-                    print("1")
                     temp_humidity_reading = self.sensors_manager.get_temp_humidity()
-                    print("2")
+                    air_reading = self.sensors_manager.get_air_quality(temp_humidity_reading[0], temp_humidity_reading[1])
                     flame_reading = self.sensors_manager.get_flame_presence()
-                    print("3")
-                    
-                    print("Air quality:", air_reading , type(air_reading))
-                    print("Temperature:", temp_humidity_reading[0], type(temp_humidity_reading[0]))
-                    print("Humidity:", temp_humidity_reading[1], type(temp_humidity_reading[1]))
-                    print("Flame presence:", flame_reading, type(flame_reading))
                     
                     await self.__notify(
                         self.__encode_json_data({
@@ -93,7 +85,7 @@ class BlePeripheralManager:
                             'air': air_reading,
                             'temp': temp_humidity_reading[0],
                             'humidity': temp_humidity_reading[1],
-                            'flame': flame_reading(),
+                            'flame': flame_reading,
                         })
                     )
             except Exception as e:
@@ -147,6 +139,6 @@ class Node:
     async def start(self):
         print("starting")
         await asyncio.create_task(self.bt_node.run())
-                
+              
 node = Node()
 asyncio.run(node.start())
