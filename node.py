@@ -14,7 +14,7 @@ MTU=512
 
 # Shared
 _DEVICE_NAME_PREFIX = "GREENDOT-"
-_NODE_ID = 1
+_NODE_ID = 0
 _DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_NODE_ID)
 
 # Sampling intervals
@@ -75,9 +75,31 @@ class BlePeripheralManager:
                     
                     print("trying to read sensor values....")
                     
-                    temp_humidity_reading = self.sensors_manager.get_temp_humidity()
-                    air_reading = self.sensors_manager.get_air_quality(temp_humidity_reading[0], temp_humidity_reading[1])
-                    flame_reading = self.sensors_manager.get_flame_presence()
+                    temp_humidity_reading = None
+                    air_reading = None
+                    flame_reading = None
+                    try:
+                       temp_humidity_reading = self.sensors_manager.get_temp_humidity()
+                    except Exception as e:
+                        print("Error reading sensor values:", e)
+                        await asyncio.sleep(5)
+                        continue
+                    try:
+                       air_reading = self.sensors_manager.get_air_quality(temp_humidity_reading[0],temp_humidity_reading[1])
+                    except Exception as e:
+                        print("Error reading sensor values:", e)
+                        await asyncio.sleep(5)
+                        continue
+                    try:
+                       flame_reading = self.sensors_manager.get_flame_presence()
+                    except Exception as e:
+                        print("Error reading sensor values:", e)
+                        await asyncio.sleep(5)
+                        continue
+                    
+                    # temp_humidity_reading = self.sensors_manager.get_temp_humidity()
+                    # air_reading = self.sensors_manager.get_air_quality(temp_humidity_reading[0], temp_humidity_reading[1])
+                    # flame_reading = self.sensors_manager.get_flame_presence()
                     
                     await self.__notify(
                         self.__encode_json_data({
