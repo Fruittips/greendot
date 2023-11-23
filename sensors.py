@@ -11,7 +11,11 @@ class SensorsManager:
         print("Initialised sensors manager")
     
     def get_flame_presence(self):
-        return self.flame_sensor.value()
+        raw_value = self.flame_sensor.value()
+        if (raw_value == 0):
+            return 1
+        if (raw_value == 1):
+            return 0
     
     def get_temp_humidity(self):
         try:
