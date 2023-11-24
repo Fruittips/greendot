@@ -18,6 +18,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 # Supabase Config
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_API_KEY = os.getenv("SUPABASE_API_KEY")
+SUPABASE_TABLE_NAME = "firecloud"
 
 # MQTT Settings
 ENDPOINT = os.getenv("MQTT_HOST");
@@ -38,13 +39,22 @@ if not (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY):
     print("Missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY environment variable")
     exit(1)
 
-# Supabase client
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_API_KEY)
+# GLOBAL VARIABLES
+PAST_RECORDS_DURATION = 5 # in minutes
+aq_duration = None # duration of air quality raising above threshold
+fire_status = 0 # 0 => no fire, 1 => fire
+fire_duration = None # duration of fire
 
 class MqttClient:
     def __init__(self):
+        self.supabase = self._create_supabase_client()
         self.client = self._build_client()
         self.connection = self._establish_connection()
+        
+    # Supabase client
+    def _create_supabase_client(self):
+        supabase = create_client(SUPABASE_URL, SUPABASE_API_KEY)
+        return supabase
         
     def _build_client(self):
         client = mqtt5_client_builder.websockets_with_default_aws_signing(
@@ -83,12 +93,19 @@ class MqttClient:
         air_quality_ppm = message_json["air"]
         flame_presence = message_json["flame"]
         
-        r_value = get_r_value(temp, humidity)
+        # get past records from supabase
+        temp_hum_data = []
+        try:
+            temp_hum_data = self.supabase.rpc("get_past_records", {"interval_string": f"{PAST_RECORDS_DURATION} minutes", })
+        except Exception as e:
+            print(f"Error getting past records supabase: {e}")
+
+        r_value = get_r_value(temp_hum_data)
         fire_probability = get_fire_probability(temp, humidity, air_quality_ppm, flame_presence, r_value)
         
         # update table in supabase
         try:
-            supabase.table('firecloud') \
+            self.supabase.table(SUPABASE_TABLE_NAME) \
                 .insert({
                     "node_id": message_json["id"],
                     "timestamp": convert_epoch_to_utc(message_json["timestamp"]),
@@ -96,32 +113,35 @@ class MqttClient:
                     "humidity": humidity,
                     "air_quality_ppm": air_quality_ppm,
                     "flame_sensor_value": flame_presence,
-                    "fire_probability": fire_probability, #TODO: insert the probability here (create a col on supabase first)
-                    "r_value": r_value, #TODO: insert the r_value here//TODO: insert the r_value here as well (create in supabase first)
+                    "fire_probability": fire_probability,
+                    "r_value": r_value,
                 }) \
                 .execute()
         except Exception as e:
             print(f"Error inserting to supabase: {e}")
             
-        print(f"Inserted into supabase table: 'firecloud'")
+        print(f"Inserted into supabase table: '{SUPABASE_TABLE_NAME}'")
         
-        #TODO: after inserting, publish to update flame probability on mqtt
         self.publish_fire_message(fire_probability)
+        
+        
     
     # publish fire status, 0 => no fire, 1 => fire
     def publish_fire_message(self, fire_probability):
         fire_probability_threshold = 0.3
-        status = 0
         
         if (fire_probability >= fire_probability_threshold):
-            status = 1
+            fire_status = 1
+        
+        
+        
         
         try:
-            print(f"Publishing fire status: {status}")
+            print(f"Publishing fire status: {fire_status}")
             self.connection.publish(FLAME_PRESENCE_TOPIC, 
-                                json.dumps({"status": status}), 
+                                json.dumps({"status": fire_status}), 
                                 mqtt5.QoS.AT_LEAST_ONCE)
-            print(f"Published fire status: {status}")
+            print(f"Published fire status: {fire_status}")
         except Exception as e:
             print(f"Error publishing fire status: {e}")
 
@@ -133,21 +153,28 @@ def convert_epoch_to_utc(epoch_time):
 # CALCULATION FOR FIRE PROBABILITY
 def get_fire_probability (temp, humidity, air_quality, flame_presence, r_value):
     p_flame = flame_presence
-    p_air = None
+    p_air = get_air_quality_probability(air_quality)
     p_temp = get_temp_proability(temp)
     p_temp_hum = get_temp_humidity_probability(r_value)
     
-    
     p_fire = 0.3 * p_flame + 0.3 * p_air + 0.2 * p_temp_hum + 0.2 * p_temp
-    return p_fire #TODO: replace w real values
+    return p_fire
 
-#TODO: get the time for how long this air quality has been all
 def get_air_quality_probability(air_quality):
-    #TODO: time is 5 minutes
-    air_quality_threshold = 100 # TODO: get the threshold value
+    air_quality_threshold = 500 # value fluctuates between 500 - 550 depending on environment
+    
     if (air_quality > air_quality_threshold):
-        return 1
+        if (aq_duration == None):
+            aq_duration = datetime.now()
+            return 0
+        else:
+            time_diff = datetime.now() - aq_duration
+            if (time_diff.minute > 5): # if air quality has been above threshold for 5 mins
+                return 1
+            else:
+                return 0
     else:
+        aq_duration = None # reset aq_duration
         return 0
 
 def get_temp_proability(temp):
@@ -158,13 +185,19 @@ def get_temp_proability(temp):
         return 0
     
 def get_temp_humidity_probability(r_value):
-    r_value_threshold = 0.5 # TODO: get the threshold value
-    if (r_value > r_value_threshold):
+    r_reference = -0.62
+    
+    r_ratio = r_value / r_reference
+    
+    if (r_ratio > 1):
         return 1
-    else:
+    elif (r_ratio < 0):
         return 0
+    else:
+        return r_ratio
 
-def get_r_value(temp, humidity): #TODO: get the r_value
+def get_r_value(temp_hum_records): 
+    
     return None
 
 #---------------------------------------------
