@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: ap-southeast-1
-  ECR_REPOSITORY: firecloud-application-versions-prod
+  ECR_REPOSITORY: lambda-application-versions-prod
   ECR_REPOSITORY_URI: 892404399729.dkr.ecr.ap-southeast-1.amazonaws.com
   LAMBDA_FUNCTION_NAME: greendot-analytics
 
@@ -40,3 +40,9 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:lambda_${{github.run_number}} .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:lambda_${{github.run_number}}
+
+    - name: Update Lambda function to new image
+      run: |
+        aws lambda update-function-code \
+        --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+        --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:lambda_${{github.run_number}}
