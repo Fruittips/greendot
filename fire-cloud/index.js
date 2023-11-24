@@ -60,15 +60,27 @@ async function connectAndSubscribe() {
         const messageJson = JSON.parse(messageString);
         console.log(`Message received on ${topic}:`, messageJson);
 
-        //TODO: CALCULATION
+        const temperature = messageJson.temp;
+        const humidity = messageJson.humidity;
+        const air_quality_ppm = messageJson.air;
+        const flame_sensor_value = messageJson.flame;
+
+        const flameProbability = getFireProbability({
+            temp: temperature,
+            humidity: humidity,
+            airQuality: air_quality_ppm,
+            flameValue: flame_sensor_value,
+        });
+
         let { error } = await supabase.from("firecloud").insert({
             node_id: messageJson.id,
             timestamp: convertEpochToUTC(messageJson.timestamp),
-            temperature: messageJson.temp,
-            humidity: messageJson.humidity,
-            air_quality_ppm: messageJson.air,
-            flame_sensor_value: messageJson.flame,
-            flame_probability: 0, //TODO: insert the probability here (create a col on supabase first)
+            temperature: temperature,
+            humidity: humidity,
+            air_quality_ppm: air_quality_ppm,
+            flame_sensor_value: flame_sensor_value,
+            flame_probability: flameProbability, //TODO: insert the probability here (create a col on supabase first)
+            //TODO: insert the r_value here as well (create in supabase first)
         });
 
         //TODO: after inserting, publish to update flame probability on mqtt
@@ -90,9 +102,24 @@ async function publishMessage(topic, message) {
     }
 }
 
-function getFlameProbability(flameSensorValue) {
-    //TODO: CALCULATION
-    /* RETURNS 1 IF FLAME, ELSE 0 FOR NO FLAME */
+function getFireProbability({ temp, humidity, airQuality, flameValue }) {
+    const p_flame = flameValue; //flame is either 1 or 0
+    const p_air = null;
+    const p_temp = getTempProbability(temp);
+    const p_r_value = getRValueProbability(temp, humidity);
+}
+
+/* calculate r value based on temp and humidity */
+function getRValueProbability(temp, humidity) {}
+function getAirQualityProbability(airQuality) {}
+function getTempProbability(temp) {
+    const tempThreshold = 40; //highest in sg: 37 + 3 = 40 deg (3 for threshold)
+
+    if (temp > tempThreshold) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 const connection = establishConnection();

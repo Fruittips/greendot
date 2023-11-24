@@ -1,18 +1,13 @@
 # Use the Node.js 16 Alpine image as a parent image
-FROM node:20-alpine
+FROM python:3.11-alpine
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-
-RUN apk add --no-cache \
-      python3 make g++ tar cmake
+COPY requirements.txt .
 
 RUN rm -rf /var/cache/apk/*
 
-RUN npm install tar
-
-RUN npm install -g npm@latest && npm install --omit=dev
+RUN pip install -r requirements.txt
 
 COPY . .
 
