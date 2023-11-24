@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.454.0",
     "@supabase/supabase-js": "^2.38.4",
     "aws-iot-device-sdk-v2": "^1.16.2",
     "dotenv": "^16.3.1"
