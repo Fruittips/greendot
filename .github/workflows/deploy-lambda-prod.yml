@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: ap-southeast-1
-  ECR_REPOSITORY: lambda-application-versions-prod
+  ECR_REPOSITORY: firecloud-application-versions-prod
   ECR_REPOSITORY_URI: 892404399729.dkr.ecr.ap-southeast-1.amazonaws.com
   LAMBDA_FUNCTION_NAME: greendot-analytics
 
