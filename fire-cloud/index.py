@@ -43,8 +43,11 @@ if not (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY):
 PAST_RECORDS_DURATION = 5 # in minutes
 aq_duration = None # duration of air quality raising above threshold
 fire_status = 0 # 0 => no fire, 1 => fire
-fire_duration = None # duration of fire
+no_fire_duration = None # duration of fire
 
+#TODO: check if date time library is correct not
+#TODO: check if UTC time is accurate
+#TODO: calc r value from past records
 class MqttClient:
     def __init__(self):
         self.supabase = self._create_supabase_client()
@@ -122,20 +125,31 @@ class MqttClient:
             
         print(f"Inserted into supabase table: '{SUPABASE_TABLE_NAME}'")
         
-        self.publish_fire_message(fire_probability)
+        self.validate_and_publish_fire_message(fire_probability)
         
         
     
     # publish fire status, 0 => no fire, 1 => fire
-    def publish_fire_message(self, fire_probability):
+    def validate_and_publish_fire_message(self, fire_probability):
         fire_probability_threshold = 0.3
         
         if (fire_probability >= fire_probability_threshold):
+            if (fire_status == 0):
+                self.publish_fire_message(1)
             fire_status = 1
         
-        
-        
-        
+        #fire could be dying off
+        if (fire_status == 1 and fire_probability < fire_probability_threshold):
+            if (no_fire_duration is None):
+                no_fire_duration = datetime.now()
+            else:
+                time_diff = datetime.now() - no_fire_duration
+                if (time_diff.minute > 5):
+                    self.publish_fire_message(0)
+                    fire_status = 0
+                    no_fire_duration = None
+
+    def _publish_fire_message(self,fire_status):
         try:
             print(f"Publishing fire status: {fire_status}")
             self.connection.publish(FLAME_PRESENCE_TOPIC, 
@@ -197,7 +211,7 @@ def get_temp_humidity_probability(r_value):
         return r_ratio
 
 def get_r_value(temp_hum_records): 
-    
+    #TODO: calculate r value from records of temp and hum
     return None
 
 #---------------------------------------------
