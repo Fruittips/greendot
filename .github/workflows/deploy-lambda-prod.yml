@@ -1,0 +1,48 @@
+name: Build, Push and Deploy Docker Image to Lambda
+
+on:
+  push:
+    branches: [prod]
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REPOSITORY: lambda-application-versions-prod
+  ECR_REPOSITORY_URI: 892404399729.dkr.ecr.ap-southeast-1.amazonaws.com
+  LAMBDA_FUNCTION_NAME: greendot-analytics
+
+defaults:
+  run:
+    working-directory: ./lambda
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:lambda_${{github.run_number}} .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:lambda_${{github.run_number}}
+
+    # - name: Update Lambda function to new image
+    #   run: |
+    #     aws lambda update-function-code \
+    #     --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+    #     --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:lambda_${{github.run_number}}
