@@ -2,7 +2,7 @@ name: Build, Push and Deploy Docker Image to Lambda
 
 on:
   push:
-    branches: [prod]
+    branches: [prod-lambda]
 
 env:
   AWS_REGION: ap-southeast-1
