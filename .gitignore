@@ -1,4 +1,6 @@
 rpi/cloud/*
+*/.env
 node_modules
 .env
 .DS_Store
+fire-cloud/.python-version

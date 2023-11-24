@@ -1,4 +1,5 @@
 import { iot, mqtt, auth } from "aws-iot-device-sdk-v2";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 dotenv.config();
@@ -27,7 +28,19 @@ if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
     process.exit(1);
 }
 
+if (!process.env.AWS_LAMBDA_KEY || !process.env.AWS_LAMBDA_SECRET) {
+    console.error("Missing AWS_LAMBDA_KEY or AWS_LAMBDA_SECRET environment variable");
+    process.exit(1);
+}
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_API_KEY);
+const lambdaClient = new LambdaClient({ 
+    region: REGION,  
+    credentials: {
+        accessKeyId: process.env.AWS_LAMBDA_KEY,
+        secretAccessKey: process.env.AWS_LAMBDA_SECRET,
+    },
+});
 
 function convertEpochToUTC(epochTime) {
     const date = new Date(epochTime * 1000);
@@ -53,6 +66,8 @@ async function connectAndSubscribe() {
     console.log("Connecting to AWS IoT Core...");
     await connection.connect();
     console.log("Connected to AWS IoT Core");
+    const result =  await invokeLambda(1, 2, 3, 4);
+    console.log(result);
     // Subscribe to a topic
     await connection.subscribe(SENSOR_DATA_TOPIC, mqtt.QoS.AtLeastOnce, async (topic, payload) => {
         const messageBuffer = Buffer.from(payload);
@@ -120,6 +135,24 @@ function getTempProbability(temp) {
     } else {
         return 0;
     }
+}
+
+// Function to invoke the Analytics lambda function
+async function invokeAnalytics(temp, humidity, airQuality, flameValue) {
+    console.log("Invoking lambda function...");
+    const command = new InvokeCommand({
+        FunctionName: 'greendot-analytics',
+        Payload: JSON.stringify({
+            temp: temp,
+            humidity: humidity,
+            airQuality: airQuality,
+            flameValue: flameValue,
+        })
+    });
+
+    const { Payload } = await lambdaClient.send(command);
+    const result = Buffer.from(Payload).toString();
+    return JSON.parse(result).body;
 }
 
 const connection = establishConnection();
