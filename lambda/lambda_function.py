@@ -29,6 +29,6 @@ def lambda_handler(event, context):
             'coef': [
                 coef[0][1], coef[1][0],
             ],
-            'data': response.get('data')
+            'data': response.data,
         })
     }
