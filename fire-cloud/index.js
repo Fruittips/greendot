@@ -109,26 +109,15 @@ async function connectAndSubscribe() {
 
         //invoke lambda function to calculate fire probability and update database
         const rowId = data[0].id;
-        await invokeAnalytics(rowId, temperature, flameSensorValue);
+        const lambdaRes = await invokeAnalytics(rowId, temperature, flameSensorValue);
 
-        // START publish to flame presence topic to tune freq flow
-        /* 
-        1. get the fire probablity from the database
-        2. validate and check if the fire probability is above threshold -> timestamp
-        3. publish to flame presence topic
-        */
-        const { data: fireData, error: fireErr } = await supabase
-            .from("firecloud")
-            .select("fire_probability, node_id")
-            .eq("id", rowId);
+        const nodeId = lambdaRes.node_id;
+        const fireProbability = fireData.fire_probability;
 
-        if (fireErr) {
-            console.error(fireErr);
+        if (fireProbability === null) {
+            console.log("lambda function failed to calculate fire probability");
             return;
         }
-        const nodeId = fireData[0].node_id;
-        const fireProbability = fireData[0].fire_probability;
-
         await validateAndPublishFireMessage(nodeId, fireProbability);
     });
 }
@@ -138,7 +127,7 @@ async function validateAndPublishFireMessage(nodeId, fireProbability) {
     const fireProbabilityThreshold = 0.3;
 
     if (fireProbability > fireProbabilityThreshold) {
-        if (fireStatuses[nodeId] === 0) await publishMessage(FLAME_PRESENCE_TOPIC, { status: 1 });
+        if (fireStatuses[nodeId] === 0) await updateAndPublishFireMessage(FLAME_PRESENCE_TOPIC, 1);
         fireStatuses[nodeId] = 1;
     }
 
@@ -153,12 +142,26 @@ async function validateAndPublishFireMessage(nodeId, fireProbability) {
 
             // if status has been 0 for more than 5 minutes -> there is no more fire -> publish status 0
             if (timeDiffInMinutes > 5) {
-                await publishMessage(FLAME_PRESENCE_TOPIC, { status: 0 });
+                await updateAndPublishFireMessage(FLAME_PRESENCE_TOPIC, 0);
                 fireStatuses[nodeId] = 0;
                 noFireDurations[nodeId] = null;
             }
         }
     }
+}
+
+async function updateAndPublishFireMessage(topic, status) {
+    const hasFire = status === 1;
+    const { error } = await supabase
+        .from("fire_status")
+        .update({ has_fire: hasFire, timestamp: new Date().toISOString() })
+        .eq("id", 1);
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    await publishMessage(topic, { status: status });
 }
 
 async function publishMessage(topic, message) {
