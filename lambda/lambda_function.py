@@ -49,7 +49,7 @@ def lambda_handler(event, context):
                                 .execute()
     except Exception as e:
         print(f"Error updating row in supabase: {e}")
-
+        
     return json.dumps({
         'statusCode': 200,
         'body': json.dumps({
@@ -103,12 +103,10 @@ def get_r_value(temp_arr, humidity_arr):
     r_actual = r_corrcoef[0][1]
     return r_actual
 
-# #TODO: DONT PUSH THIS REMOVE IT BEFORE PUSHING
+# # #TODO: DONT PUSH THIS REMOVE IT BEFORE PUSHING
 # if __name__ == "__main__":
 #    lambda_handler({
-#        "rowId":646,
+#        "rowId":810,
 #        "temp":30.9,
-#        "humidity": 72.4,
 #        "flame": 0,
-#        "airQuality": 526.858
 #        }, None)
