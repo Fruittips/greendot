@@ -50,13 +50,13 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error updating row in supabase: {e}")
 
-    return json.dumps({
+    return {
         'statusCode': 200,
         'body': json.dumps({
             'fire_probability': fire_probability,
             'r_value': r_value,
         })
-    })
+    }
     
 def get_fire_probability (temp, aq_arr , flame_presence, r_value):
     p_flame = flame_presence
@@ -108,7 +108,5 @@ def get_r_value(temp_arr, humidity_arr):
 #    lambda_handler({
 #        "rowId":646,
 #        "temp":30.9,
-#        "humidity": 72.4,
 #        "flame": 0,
-#        "airQuality": 526.858
 #        }, None)
