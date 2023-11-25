@@ -13,7 +13,10 @@ const ENDPOINT = process.env.MQTT_HOST;
 const REGION = "ap-southeast-1";
 const CLIENT_ID = `FIRE-CLOUD`;
 const SENSOR_DATA_TOPIC = "greendot/sensor/data";
-const TIMEZONE_OFFSET = 8;
+const FLAME_PRESENCE_TOPIC = "greendot/status";
+// const TIMEZONE_OFFSET = 8;
+
+const aqDuration = null; // duration of air quality raising above threshold
 
 if (!SUPABASE_URL || !SUPABASE_API_KEY) {
     console.error("Missing SUPABASE_URL or SUPABASE_API_KEY environment variable");
@@ -77,8 +80,8 @@ async function connectAndSubscribe() {
 
         const temperature = messageJson.temp;
         const humidity = messageJson.humidity;
-        const air_quality_ppm = messageJson.air;
-        const flame_sensor_value = messageJson.flame;
+        const airQualityPpm = messageJson.air;
+        const flameSensorValue = messageJson.flame;
 
         const { data, error } = await supabase
             .from("firecloud")
@@ -87,17 +90,26 @@ async function connectAndSubscribe() {
                 timestamp: convertEpochToUTC(messageJson.timestamp),
                 temperature: temperature,
                 humidity: humidity,
-                air_quality_ppm: air_quality_ppm,
-                flame_sensor_value: flame_sensor_value,
+                air_quality_ppm: airQualityPpm,
+                flame_sensor_value: flameSensorValue,
             })
             .select();
         if (error) {
             console.error(error);
             return;
         }
-        console.log("Inserted into supabase");
 
-        //TODO: invoke lambda function to calculate fire probability and update database
+        //invoke lambda function to calculate fire probability and update database
+        const rowId = data[0].id;
+        await invokeAnalytics(rowId, temperature, flameSensorValue);
+
+        // START publish to flame presence topic to tune freq flow
+
+        // const randFlameStatus = Math.round(Math.random()); //random either 1 or 0 //TODO: remove and replace with real flame value
+
+        // publishMessage(FLAME_PRESENCE_TOPIC, {
+        //     status: randFlameStatus,
+        // });
     });
 }
 
@@ -127,16 +139,14 @@ async function publishMessage(topic, message) {
 }
 
 // Function to invoke the Analytics lambda function to calculate the fire probability and update the database
-// TODO: rmb to pass row id of newly inserted row to lambda
-async function invokeAnalytics(temp, humidity, airQuality, flameValue) {
+async function invokeAnalytics(rowId, temp, flameValue) {
     console.log("Invoking lambda function...");
     const command = new InvokeCommand({
         FunctionName: "greendot-analytics",
         Payload: JSON.stringify({
+            rowId: rowId,
             temp: temp,
-            humidity: humidity,
-            airQuality: airQuality,
-            flameValue: flameValue,
+            flame: flameValue,
         }),
     });
 
