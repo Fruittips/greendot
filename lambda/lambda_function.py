@@ -3,12 +3,16 @@ import json
 import numpy as np
 import os
 from supabase import create_client, Client
+import redis
 
-# load_dotenv() #load variables from .env
-
+REDIS_ENDPOINT = os.environ.get("REDIS_ENDPOINT")
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_API_KEY")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+redisClient = redis.StrictRedis(host=REDIS_ENDPOINT, port=6379, decode_responses=True)
+
+PAST_RECORDS_DURATION = 120 # in minutes
 
 PAST_RECORDS_DURATION = 120 # in minutes
 
@@ -51,6 +55,15 @@ def lambda_handler(event, context):
                                 .execute()
     except Exception as e:
         print(f"Error updating row in supabase: {e}")
+
+    return json.dumps({
+        'statusCode': 200,
+        'body': json.dumps({
+            'fire_probability': fire_probability,
+            'r_value': r_value,
+            'redis_val': test_redis()
+        })
+    })
     
 def get_fire_probability (temp, aq_arr , flame_presence, r_value):
     p_flame = flame_presence
@@ -96,6 +109,34 @@ def get_r_value(temp_arr, humidity_arr):
     r_corrcoef = np.corrcoef(temp_arr, humidity_arr, rowvar=False)
     r_actual = r_corrcoef[0][1]
     return r_actual
+
+# ================== Redis helper functions ==================
+def set_timestamp(nodeId: str):
+    key = f"node_{nodeId}_timestamp"
+    five_minutes = 60 * 5
+    redisClient.set(key, "1")
+    redisClient.expire(key, five_minutes)
+
+def set_flag(nodeId: str):
+    key = f"node_{nodeId}_flag"
+    redisClient.set(key, "1")
+
+def get_flag(nodeId: str):
+    key = f"node_{nodeId}_flag"
+    # return None if does not exists
+    return redisClient.get(key)
+
+def get_timestamp(nodeId: str):
+    key = f"node_{nodeId}_timestamp"
+    # return None if does not exists
+    return redisClient.get(key)
+
+def test_redis():
+    key = "test"
+    redisClient.set(key, "1")
+    res = redisClient.get(key)
+    redisClient.delete(key)
+    return res
 
 # #TODO: DONT PUSH THIS REMOVE IT BEFORE PUSHING
 # if __name__ == "__main__":
