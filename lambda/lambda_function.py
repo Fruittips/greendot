@@ -10,22 +10,14 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+try:
+    redisClient = redis.from_url(REDIS_ENDPOINT, decode_responses=True)
+except Exception as e:
+    print(f"Error connecting to redis: {e}")
 
 PAST_RECORDS_DURATION = 120 # in minutes
 
 def lambda_handler(event, context):
-
-    try:
-        redisClient = redis.Redis(host=REDIS_ENDPOINT, port=6379, decode_responses=True)
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'error': 'Error connecting to redis',
-                'error_message': str(e)
-            })
-        }
-
     rowId = event.get('rowId')
     temp = event.get('temp')
     flame = event.get('flame')
