@@ -34,9 +34,14 @@ def lambda_handler(event, context):
     temp_arr = [] if temp_hum_aq_data.get("all_temperature", None) is None else temp_hum_aq_data.get("all_temperature")
     humidity_arr = [] if temp_hum_aq_data.get("all_humidity", None) is None else temp_hum_aq_data.get("all_humidity")
     aq_arr = [] if temp_hum_aq_data.get("all_air_quality_ppm", None) is None else temp_hum_aq_data.get("all_air_quality_ppm")
-        
-    r_value = get_r_value(temp_arr, humidity_arr)
-    fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
+    
+    r_value = None
+    fire_probability = 0
+    if len(temp_arr) != 0 or len(humidity_arr) != 0:
+        r_value = get_r_value(temp_arr, humidity_arr)
+
+    if len(aq_arr) != 0 and r_value != None:
+        fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
     
     #update row in supabase table with r_value and fire_probability
     try:
@@ -106,8 +111,10 @@ def get_r_value(temp_arr, humidity_arr):
 # # #TODO: DONT PUSH THIS REMOVE IT BEFORE PUSHING
 # if __name__ == "__main__":
 #     x = lambda_handler({
-#        "rowId":810,
-#        "temp":30.9,
-#        "flame": 0,
-#        }, None)
+#   "rowId": 646,
+#   "temp": 30.9,
+#   "humidity": 72.4,
+#   "flame": 0,
+#   "airQuality": 526.858
+# }, None)
 #     print(x)
