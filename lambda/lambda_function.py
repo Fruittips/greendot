@@ -22,7 +22,7 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error getting past records supabase: {e}")
         
-    if (temp_hum_aq_res == None or not temp_hum_aq_res.data):
+    if (temp_hum_aq_res == None or temp_hum_aq_res.data == None):
         return {
             'statusCode': 500,
             'body': json.dumps({
@@ -105,8 +105,9 @@ def get_r_value(temp_arr, humidity_arr):
 
 # # #TODO: DONT PUSH THIS REMOVE IT BEFORE PUSHING
 # if __name__ == "__main__":
-#    lambda_handler({
+#     x = lambda_handler({
 #        "rowId":810,
 #        "temp":30.9,
 #        "flame": 0,
 #        }, None)
+#     print(x)
