@@ -10,11 +10,22 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-redisClient = redis.StrictRedis(host=REDIS_ENDPOINT, port=6379, decode_responses=True)
 
 PAST_RECORDS_DURATION = 120 # in minutes
 
 def lambda_handler(event, context):
+
+    try:
+        redisClient = redis.Redis(host=REDIS_ENDPOINT, port=6379, decode_responses=True)
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': 'Error connecting to redis',
+                'error_message': str(e)
+            })
+        }
+
     rowId = event.get('rowId')
     temp = event.get('temp')
     flame = event.get('flame')
@@ -59,7 +70,7 @@ def lambda_handler(event, context):
         'body': json.dumps({
             'fire_probability': fire_probability,
             'r_value': r_value,
-            'redis_val': test_redis()
+            'redis_val': test_redis(redisClient)
         })
     })
     
@@ -109,27 +120,27 @@ def get_r_value(temp_arr, humidity_arr):
     return r_actual
 
 # ================== Redis helper functions ==================
-def set_timestamp(nodeId: str):
-    key = f"node_{nodeId}_timestamp"
-    five_minutes = 60 * 5
-    redisClient.set(key, "1")
-    redisClient.expire(key, five_minutes)
+# def set_timestamp(nodeId: str):
+#     key = f"node_{nodeId}_timestamp"
+#     five_minutes = 60 * 5
+#     redisClient.set(key, "1")
+#     redisClient.expire(key, five_minutes)
 
-def set_flag(nodeId: str):
-    key = f"node_{nodeId}_flag"
-    redisClient.set(key, "1")
+# def set_flag(nodeId: str):
+#     key = f"node_{nodeId}_flag"
+#     redisClient.set(key, "1")
 
-def get_flag(nodeId: str):
-    key = f"node_{nodeId}_flag"
-    # return None if does not exists
-    return redisClient.get(key)
+# def get_flag(nodeId: str):
+#     key = f"node_{nodeId}_flag"
+#     # return None if does not exists
+#     return redisClient.get(key)
 
-def get_timestamp(nodeId: str):
-    key = f"node_{nodeId}_timestamp"
-    # return None if does not exists
-    return redisClient.get(key)
+# def get_timestamp(nodeId: str):
+#     key = f"node_{nodeId}_timestamp"
+#     # return None if does not exists
+#     return redisClient.get(key)
 
-def test_redis():
+def test_redis(redisClient):
     key = "test"
     redisClient.set(key, "1")
     res = redisClient.get(key)
