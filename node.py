@@ -132,12 +132,12 @@ class BlePeripheralManager:
                 if len(flame_presence_data) > 0:
                     flame_presence = self.__decode_json_data(self.flame_presence_characteristic.read())
                     print("Flame presence characteristic value:",flame_presence)
-                    if flame_presence["status"] == "1":
+                    if flame_presence["status"] == 1:
                         print("Flame detected. Increasing sampling interval and clock frequency.")
                         self.sampling_interval = _SAMPLING_INTERVAL_HIGH
                         machine.freq(_FREQ_HIGH)
                         print(f"Sampling interval: {self.sampling_interval} seconds", f"Clock frequency: {machine.freq()}")
-                    elif flame_presence["status"] == "0":
+                    elif flame_presence["status"] == 0:
                         print("No flame detected. Decreasing sampling interval and clock frequency.")
                         self.sampling_interval = _SAMPLING_INTERVAL_LOW
                         machine.freq(_FREQ_LOW)
