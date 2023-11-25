@@ -23,7 +23,7 @@ _SAMPLING_INTERVAL_HIGH = 5
 
 # Frequencies
 _FREQ_HIGH = 160000000 # 160 MHz
-_FREQ_LOW = 20000000, # 20 MHz
+_FREQ_LOW = 80000000 # 80 MHz (any lower and esp32 will not run as intended)
 
 # Sensors
 _FLAME_PIN = 4
