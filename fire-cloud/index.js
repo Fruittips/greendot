@@ -34,8 +34,8 @@ if (!process.env.AWS_LAMBDA_KEY || !process.env.AWS_LAMBDA_SECRET) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_API_KEY);
-const lambdaClient = new LambdaClient({ 
-    region: REGION,  
+const lambdaClient = new LambdaClient({
+    region: REGION,
     credentials: {
         accessKeyId: process.env.AWS_LAMBDA_KEY,
         secretAccessKey: process.env.AWS_LAMBDA_SECRET,
@@ -66,8 +66,8 @@ async function connectAndSubscribe() {
     console.log("Connecting to AWS IoT Core...");
     await connection.connect();
     console.log("Connected to AWS IoT Core");
-    const result =  await invokeLambda(1, 2, 3, 4);
-    console.log(result);
+    // const result = await invokeAnalytics(1, 2, 3, 4); //TODO: remove this
+
     // Subscribe to a topic
     await connection.subscribe(SENSOR_DATA_TOPIC, mqtt.QoS.AtLeastOnce, async (topic, payload) => {
         const messageBuffer = Buffer.from(payload);
@@ -80,31 +80,40 @@ async function connectAndSubscribe() {
         const air_quality_ppm = messageJson.air;
         const flame_sensor_value = messageJson.flame;
 
-        const flameProbability = getFireProbability({
-            temp: temperature,
-            humidity: humidity,
-            airQuality: air_quality_ppm,
-            flameValue: flame_sensor_value,
-        });
-
-        let { error } = await supabase.from("firecloud").insert({
-            node_id: messageJson.id,
-            timestamp: convertEpochToUTC(messageJson.timestamp),
-            temperature: temperature,
-            humidity: humidity,
-            air_quality_ppm: air_quality_ppm,
-            flame_sensor_value: flame_sensor_value,
-            flame_probability: flameProbability, //TODO: insert the probability here (create a col on supabase first)
-            //TODO: insert the r_value here as well (create in supabase first)
-        });
-
-        //TODO: after inserting, publish to update flame probability on mqtt
+        const { data, error } = await supabase
+            .from("firecloud")
+            .insert({
+                node_id: messageJson.id,
+                timestamp: convertEpochToUTC(messageJson.timestamp),
+                temperature: temperature,
+                humidity: humidity,
+                air_quality_ppm: air_quality_ppm,
+                flame_sensor_value: flame_sensor_value,
+            })
+            .select();
         if (error) {
             console.error(error);
             return;
         }
         console.log("Inserted into supabase");
+
+        //TODO: invoke lambda function to calculate fire probability and update database
     });
+}
+
+//TODO: subscribe to supabase table for updates on the flag and timestamp -> validate and publish to MQTT topic
+async function subscribeSupabase() {
+    const { data, error } = await supabase
+        .from("firecloud")
+        .on("*", (payload) => {
+            console.log("Change received!", payload);
+        })
+        .subscribe();
+    if (error) {
+        console.error(error);
+        return;
+    }
+    console.log("Subscribed to supabase");
 }
 
 async function publishMessage(topic, message) {
@@ -117,37 +126,18 @@ async function publishMessage(topic, message) {
     }
 }
 
-function getFireProbability({ temp, humidity, airQuality, flameValue }) {
-    const p_flame = flameValue; //flame is either 1 or 0
-    const p_air = null;
-    const p_temp = getTempProbability(temp);
-    const p_r_value = getRValueProbability(temp, humidity);
-}
-
-/* calculate r value based on temp and humidity */
-function getRValueProbability(temp, humidity) {}
-function getAirQualityProbability(airQuality) {}
-function getTempProbability(temp) {
-    const tempThreshold = 40; //highest in sg: 37 + 3 = 40 deg (3 for threshold)
-
-    if (temp > tempThreshold) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-// Function to invoke the Analytics lambda function
+// Function to invoke the Analytics lambda function to calculate the fire probability and update the database
+// TODO: rmb to pass row id of newly inserted row to lambda
 async function invokeAnalytics(temp, humidity, airQuality, flameValue) {
     console.log("Invoking lambda function...");
     const command = new InvokeCommand({
-        FunctionName: 'greendot-analytics',
+        FunctionName: "greendot-analytics",
         Payload: JSON.stringify({
             temp: temp,
             humidity: humidity,
             airQuality: airQuality,
             flameValue: flameValue,
-        })
+        }),
     });
 
     const { Payload } = await lambdaClient.send(command);
