@@ -14,8 +14,6 @@ redisClient = redis.StrictRedis(host=REDIS_ENDPOINT, port=6379, decode_responses
 
 PAST_RECORDS_DURATION = 120 # in minutes
 
-PAST_RECORDS_DURATION = 120 # in minutes
-
 def lambda_handler(event, context):
     rowId = event.get('rowId')
     temp = event.get('temp')
