@@ -12,7 +12,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 try:
-    redisClient = redis.StrictRedis(host=REDIS_ENDPOINT, port=6379, decode_responses=True)
+    redisClient = redis.Redis(host=REDIS_ENDPOINT, port=6379, decode_responses=True)
 except Exception as e:
     print(f"Error connecting to redis: {e}")
 
