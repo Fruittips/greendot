@@ -8,7 +8,7 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-PAST_RECORDS_DURATION = 5 # in minutes
+PAST_RECORDS_DURATION = 5 # in minutes 
 
 def lambda_handler(event, context):
     rowId = event.get('rowId')
