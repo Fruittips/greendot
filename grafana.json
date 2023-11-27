@@ -134,7 +134,7 @@
                     "editorMode": "code",
                     "format": "table",
                     "rawQuery": true,
-                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_0 FROM firecloud WHERE node_id = 0 LIMIT 50 ",
+                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_0 FROM firecloud WHERE node_id = 0 order by\n  timestamp desc LIMIT 50 ",
                     "refId": "Node 0 Probability",
                     "sql": {
                         "columns": [
@@ -197,7 +197,7 @@
                     "format": "table",
                     "hide": false,
                     "rawQuery": true,
-                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_1 FROM firecloud WHERE node_id = 1 LIMIT 50 ",
+                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_1 FROM firecloud WHERE node_id = 1 order by\n  timestamp desc LIMIT 50 ",
                     "refId": "Node 1 Probability",
                     "sql": {
                         "columns": [
@@ -327,7 +327,7 @@
                     "editorMode": "code",
                     "format": "table",
                     "rawQuery": true,
-                    "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
+                    "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nwhere\n  node_id = 1\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
                     "refId": "A",
                     "sql": {
                         "columns": [
@@ -870,7 +870,7 @@
                     "editorMode": "code",
                     "format": "table",
                     "rawQuery": true,
-                    "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
+                    "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nwhere\n  node_id = 0\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
                     "refId": "A",
                     "sql": {
                         "columns": [
@@ -1342,20 +1342,20 @@
             "type": "gauge"
         }
     ],
-    "refresh": "",
+    "refresh": false,
     "schemaVersion": 38,
     "tags": [],
     "templating": {
         "list": []
     },
     "time": {
-        "from": "2023-11-27T11:48:26.784Z",
-        "to": "2023-11-27T12:13:06.918Z"
+        "from": "2023-11-27T12:15:23.454Z",
+        "to": "2023-11-27T12:19:27.019Z"
     },
     "timepicker": {},
     "timezone": "",
     "title": "GreenDot Dashboard",
     "uid": "f3bbb846-51ad-47ed-b928-40d06727f5ad",
-    "version": 29,
+    "version": 32,
     "weekStart": ""
 }
