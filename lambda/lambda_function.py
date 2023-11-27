@@ -43,6 +43,19 @@ def lambda_handler(event, context):
     
     # if less than 25 records, dont calculate r value and return default fire probability
     else:
+        try:
+            supabase.table('firecloud') \
+                        .update({
+                            "r_value": r_value,
+                            "fire_probability": fire_probability,
+                            }) \
+                        .eq('id', rowId) \
+                        .execute()
+        except Exception as e:
+            print(f"Error updating row in supabase: {e}")
+
+        
+        
         return json.dumps({
         'statusCode': 200,
         'body': json.dumps({
@@ -56,13 +69,13 @@ def lambda_handler(event, context):
     
     # TODO: update row in supabase table with r_value and fire_probability
     try:
-        data, count = supabase.table('firecloud') \
-                                .update({
-                                    "r_value": r_value,
-                                    "fire_probability": fire_probability,
-                                    }) \
-                                .eq('id', rowId) \
-                                .execute()
+        supabase.table('firecloud') \
+                    .update({
+                        "r_value": r_value,
+                        "fire_probability": fire_probability,
+                        }) \
+                    .eq('id', rowId) \
+                    .execute()
     except Exception as e:
         print(f"Error updating row in supabase: {e}")
         
