@@ -180,6 +180,7 @@ async function invokeAnalytics(nodeId, rowId, temp, flameValue) {
     console.log("Invoking lambda function...");
     const command = new InvokeCommand({
         FunctionName: "greendot-analytics",
+        InvocationType: "RequestResponse",
         Payload: JSON.stringify({
             nodeId: nodeId,
             rowId: rowId,
