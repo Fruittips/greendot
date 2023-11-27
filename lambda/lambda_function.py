@@ -71,7 +71,6 @@ def lambda_handler(event, context):
     if len(aq_arr) != 0 and r_value != None:
         fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
     
-    # TODO: update row in supabase table with r_value and fire_probability
     try:
         supabase.table('firecloud') \
                     .update({
@@ -138,17 +137,9 @@ def get_temp_humidity_probability(r_value):
         return r_ratio
 
 def get_r_value(temp_arr, humidity_arr): 
+    if np.std(temp_arr) == 0 or np.std(humidity_arr) == 0:
+        return None
+    
     r_corrcoef = np.corrcoef(temp_arr, humidity_arr, rowvar=False)
     r_actual = r_corrcoef[0][1]
     return r_actual
-
-# # #TODO: DONT PUSH THIS REMOVE IT BEFORE PUSHING
-# if __name__ == "__main__":
-#     x = lambda_handler({
-#   "rowId": 646,
-#   "temp": 30.9,
-#   "humidity": 72.4,
-#   "flame": 0,
-#   "airQuality": 526.858
-# }, None)
-#     print(x)
