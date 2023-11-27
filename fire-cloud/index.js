@@ -91,12 +91,13 @@ async function connectAndSubscribe() {
         const humidity = messageJson.humidity;
         const airQualityPpm = messageJson.air;
         const flameSensorValue = messageJson.flame;
+        const utcTimestamp = convertEpochToUTC(messageJson.timestamp);
 
         const { data, error } = await supabase
             .from("firecloud")
             .insert({
                 node_id: messageJson.id,
-                timestamp: convertEpochToUTC(messageJson.timestamp),
+                timestamp: utcTimestamp,
                 temperature: temperature,
                 humidity: humidity,
                 air_quality_ppm: airQualityPpm,
@@ -110,7 +111,13 @@ async function connectAndSubscribe() {
 
         //invoke lambda function to calculate fire probability and update database
         const rowId = data[0].id;
-        const lambdaRes = await invokeAnalytics(nodeId, rowId, temperature, flameSensorValue);
+        const lambdaRes = await invokeAnalytics(
+            nodeId,
+            rowId,
+            temperature,
+            flameSensorValue,
+            utcTimestamp
+        );
 
         const fireProbability = lambdaRes.fire_probability;
 
@@ -176,7 +183,7 @@ async function publishMessage(topic, message) {
 }
 
 // Function to invoke the Analytics lambda function to calculate the fire probability and update the database
-async function invokeAnalytics(nodeId, rowId, temp, flameValue) {
+async function invokeAnalytics(nodeId, rowId, temp, flameValue, utcDatetime) {
     console.log("Invoking lambda function...");
     const command = new InvokeCommand({
         FunctionName: "greendot-analytics",
@@ -186,12 +193,13 @@ async function invokeAnalytics(nodeId, rowId, temp, flameValue) {
             rowId: rowId,
             temp: temp,
             flame: flameValue,
+            utc_datetime_string: utcDatetime,
         }),
     });
 
     const { Payload } = await lambdaClient.send(command);
     let result = Buffer.from(Payload).toString();
-    result = JSON.parse(result)
+    result = JSON.parse(result);
     return JSON.parse(result.body);
 }
 

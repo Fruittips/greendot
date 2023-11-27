@@ -15,11 +15,15 @@ def lambda_handler(event, context):
     rowId = event.get('rowId')
     temp = event.get('temp')
     flame = event.get('flame')
+    utc_datatime = event.get('utc_datetime_string')
     
     # get past records from supabase
     temp_hum_aq_res = None
     try:
-        temp_hum_aq_res = supabase.rpc("get_past_records", {"interval_string": f"{PAST_RECORDS_DURATION} minutes", "node_id":  nodeId}).execute()
+        temp_hum_aq_res = supabase.rpc("get_past_records", {
+            "interval_string": f"{PAST_RECORDS_DURATION} minutes", 
+            "node_id":  nodeId, 
+            "utc_datetime_string": utc_datatime}).execute()
     except Exception as e:
         print(f"Error getting past records supabase: {e}")
         
