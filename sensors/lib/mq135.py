@@ -18,7 +18,6 @@ class MQ135(object):
     RLOAD = 10.0
     # Calibration resistance at atmospheric CO2 level
     RZERO = 76.63
-    RZERO = 10
     # Parameters for calculating ppm of CO2 from sensor resistance
     PARA = 116.6020682
     PARB = 2.769034857
@@ -73,8 +72,7 @@ class MQ135(object):
         corrected for temperature/humidity"""
         corrected_rzero = self.get_corrected_rzero(temperature,humidity)
         corrected_resistance = self.get_corrected_resistance(temperature, humidity)
-#         return self.PARA * math.pow((self.get_corrected_resistance(temperature, humidity)/ self.RZERO), -self.PARB)
-        return round(self.PARA * math.pow((corrected_resistance/self.RZERO), -self.PARB),3)
+        return self.PARA * math.pow((self.get_corrected_resistance(temperature, humidity)/ self.RZERO), -self.PARB)
 
     def get_rzero(self):
         """Returns the resistance RZero of the sensor (in kOhms) for calibratioin purposes"""
