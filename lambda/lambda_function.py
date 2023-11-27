@@ -38,7 +38,7 @@ def lambda_handler(event, context):
     humidity_arr = [] if temp_hum_aq_data.get("all_humidity", None) is None else temp_hum_aq_data.get("all_humidity")
     aq_arr = [] if temp_hum_aq_data.get("all_air_quality_ppm", None) is None else temp_hum_aq_data.get("all_air_quality_ppm")
     
-    r_value = None
+    r_value = 0
     fire_probability = 0
     
     if len(temp_arr) >= 25 and len(humidity_arr) >= 25:
@@ -68,8 +68,7 @@ def lambda_handler(event, context):
             })
         }
 
-    if len(aq_arr) != 0 and r_value != None:
-        fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
+    fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
     
     try:
         supabase.table('firecloud') \
@@ -138,7 +137,7 @@ def get_temp_humidity_probability(r_value):
 
 def get_r_value(temp_arr, humidity_arr): 
     if np.std(temp_arr) == 0 or np.std(humidity_arr) == 0:
-        return None
+        return 0
     
     r_corrcoef = np.corrcoef(temp_arr, humidity_arr, rowvar=False)
     r_actual = r_corrcoef[0][1]
