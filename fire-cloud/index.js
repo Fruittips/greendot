@@ -111,8 +111,8 @@ async function connectAndSubscribe() {
         const rowId = data[0].id;
         const lambdaRes = await invokeAnalytics(rowId, temperature, flameSensorValue);
 
-        const nodeId = lambdaRes.node_id;
-        const fireProbability = fireData.fire_probability;
+        const nodeId = messageJson.id;
+        const fireProbability = lambdaRes.fire_probability;
 
         if (fireProbability === null) {
             console.log("lambda function failed to calculate fire probability");
