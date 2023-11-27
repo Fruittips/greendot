@@ -38,7 +38,7 @@ def lambda_handler(event, context):
     r_value = None
     fire_probability = 0
     
-    if len(temp_arr) >= 0 and len(humidity_arr) > 0:
+    if len(temp_arr) >= 25 and len(humidity_arr) > 25:
         r_value = get_r_value(temp_arr, humidity_arr)
     
     # if less than 25 records, dont calculate r value and return default fire probability
