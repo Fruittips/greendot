@@ -190,8 +190,9 @@ async function invokeAnalytics(nodeId, rowId, temp, flameValue) {
     });
 
     const { Payload } = await lambdaClient.send(command);
-    const result = Buffer.from(Payload).toString();
-    return JSON.parse(result).body;
+    let result = Buffer.from(Payload).toString();
+    result = JSON.parse(result)
+    return JSON.parse(result.body);
 }
 
 const connection = establishConnection();

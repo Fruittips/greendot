@@ -24,12 +24,12 @@ def lambda_handler(event, context):
         print(f"Error getting past records supabase: {e}")
         
     if (temp_hum_aq_res == None or temp_hum_aq_res.data == None):
-        return {
+        return json.dumps({
             'statusCode': 500,
-            'body': json.dumps({
+            'body': {
                 'error': 'Error getting past records from supabase'
-            })
-        }
+            }
+        })
         
     temp_hum_aq_data = temp_hum_aq_res.data
     temp_arr = [] if temp_hum_aq_data.get("all_temperature", None) is None else temp_hum_aq_data.get("all_temperature")
@@ -55,15 +55,16 @@ def lambda_handler(event, context):
         except Exception as e:
             print(f"Error updating row in supabase: {e}")
 
-        
-        
-        return json.dumps({
-        'statusCode': 200,
-        'body': json.dumps({
-            'fire_probability': fire_probability,
-            'r_value': r_value,
-        })
-    })
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": json.dumps({
+                'fire_probability': fire_probability,
+                'r_value': r_value,
+            })
+        }
 
     if len(aq_arr) != 0 and r_value != None:
         fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
@@ -79,14 +80,17 @@ def lambda_handler(event, context):
                     .execute()
     except Exception as e:
         print(f"Error updating row in supabase: {e}")
-        
-    return json.dumps({
-        'statusCode': 200,
-        'body': json.dumps({
+    
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": json.dumps({
             'fire_probability': fire_probability,
             'r_value': r_value,
         })
-    })
+    }
     
 def get_fire_probability (temp, aq_arr , flame_presence, r_value):
     p_flame = flame_presence
