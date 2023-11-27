@@ -8,7 +8,6 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-PAST_RECORDS_DURATION = 3 # in minutes TODO: change such that we can sample >= 25 past records (e.g. sampling interval * 25)
 
 def lambda_handler(event, context):
     nodeId = event.get('nodeId')
@@ -21,7 +20,6 @@ def lambda_handler(event, context):
     temp_hum_aq_res = None
     try:
         temp_hum_aq_res = supabase.rpc("get_past_records", {
-            "interval_string": f"{PAST_RECORDS_DURATION} minutes", 
             "node_id":  nodeId, 
             "utc_datetime_string": utc_datatime}).execute()
     except Exception as e:
@@ -111,11 +109,14 @@ def get_air_quality_probability(air_quality_arr):
     if (len(air_quality_arr) == 0):
         return 0
     
-    # if every value in the array is above threshold, return 1
-    if (all(air_quality > air_quality_threshold for air_quality in air_quality_arr)):
-        return 1
-    else:
-        return 0
+    # check if at least 10 hits above threshold
+    hits_above_threshold = 0
+    for air_quality in air_quality_arr:
+        if (air_quality > air_quality_threshold):
+            hits_above_threshold += 1
+        if (hits_above_threshold >= 10):
+            return 1
+    return 0
 
 def get_temp_probability(temp):
     temp_threshold = 40 # highest in sg: 37 + 3 = 40 deg (3 for threshold)
