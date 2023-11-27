@@ -77,14 +77,14 @@ def lambda_handler(event, context):
 def get_fire_probability (temp, aq_arr , flame_presence, r_value):
     p_flame = flame_presence
     p_air = get_air_quality_probability(aq_arr)
-    p_temp = get_temp_proability(temp)
+    p_temp = get_temp_probability(temp)
     p_temp_hum = get_temp_humidity_probability(r_value)
     
     p_fire = 0.3 * p_flame + 0.3 * p_air + 0.2 * p_temp_hum + 0.2 * p_temp
     return p_fire
 
 def get_air_quality_probability(air_quality_arr):
-    air_quality_threshold = 500 # value fluctuates between 500 - 550 depending on environment
+    air_quality_threshold = 450
     
     if (len(air_quality_arr) == 0):
         return 0
@@ -95,7 +95,7 @@ def get_air_quality_probability(air_quality_arr):
     else:
         return 0
 
-def get_temp_proability(temp):
+def get_temp_probability(temp):
     temp_threshold = 40 # highest in sg: 37 + 3 = 40 deg (3 for threshold)
     if (temp > temp_threshold):
         return 1
