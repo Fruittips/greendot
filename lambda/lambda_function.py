@@ -8,7 +8,7 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-PAST_RECORDS_DURATION = 5 # in minutes TODO: change such that we can sample >= 25 past records (e.g. sampling interval * 25)
+PAST_RECORDS_DURATION = 13 # in minutes TODO: change such that we can sample >= 25 past records (e.g. sampling interval * 25)
 
 def lambda_handler(event, context):
     rowId = event.get('rowId')
@@ -37,13 +37,24 @@ def lambda_handler(event, context):
     
     r_value = None
     fire_probability = 0
-    if len(temp_arr) != 0 or len(humidity_arr) != 0:
+    
+    if len(temp_arr) >= 0 and len(humidity_arr) > 0:
         r_value = get_r_value(temp_arr, humidity_arr)
+    
+    # if less than 25 records, dont calculate r value and return default fire probability
+    else:
+        return json.dumps({
+        'statusCode': 200,
+        'body': json.dumps({
+            'fire_probability': fire_probability,
+            'r_value': r_value,
+        })
+    })
 
     if len(aq_arr) != 0 and r_value != None:
         fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
     
-    #update row in supabase table with r_value and fire_probability
+    # TODO: update row in supabase table with r_value and fire_probability
     try:
         data, count = supabase.table('firecloud') \
                                 .update({

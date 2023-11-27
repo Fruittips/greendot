@@ -18,7 +18,7 @@ _NODE_ID = 0
 _DEVICE_NAME = _DEVICE_NAME_PREFIX + str(_NODE_ID)
 
 # Sampling intervals
-_SAMPLING_INTERVAL_LOW = 60 # change to 30s in demo
+_SAMPLING_INTERVAL_LOW = 30 # Actual: 60s, Demo: 30s
 _SAMPLING_INTERVAL_HIGH = 5
 
 # Frequencies
