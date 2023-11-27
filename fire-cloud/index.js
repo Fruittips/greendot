@@ -86,6 +86,7 @@ async function connectAndSubscribe() {
         const messageJson = JSON.parse(messageString);
         console.log(`Message received on ${topic}:`, messageJson);
 
+        const nodeId = messageJson.id;
         const temperature = messageJson.temp;
         const humidity = messageJson.humidity;
         const airQualityPpm = messageJson.air;
@@ -109,9 +110,8 @@ async function connectAndSubscribe() {
 
         //invoke lambda function to calculate fire probability and update database
         const rowId = data[0].id;
-        const lambdaRes = await invokeAnalytics(rowId, temperature, flameSensorValue);
+        const lambdaRes = await invokeAnalytics(nodeId, rowId, temperature, flameSensorValue);
 
-        const nodeId = messageJson.id;
         const fireProbability = lambdaRes.fire_probability;
 
         if (fireProbability === null) {
@@ -176,11 +176,12 @@ async function publishMessage(topic, message) {
 }
 
 // Function to invoke the Analytics lambda function to calculate the fire probability and update the database
-async function invokeAnalytics(rowId, temp, flameValue) {
+async function invokeAnalytics(nodeId, rowId, temp, flameValue) {
     console.log("Invoking lambda function...");
     const command = new InvokeCommand({
         FunctionName: "greendot-analytics",
         Payload: JSON.stringify({
+            nodeId: nodeId,
             rowId: rowId,
             temp: temp,
             flame: flameValue,

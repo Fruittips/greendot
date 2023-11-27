@@ -11,6 +11,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 PAST_RECORDS_DURATION = 3 # in minutes TODO: change such that we can sample >= 25 past records (e.g. sampling interval * 25)
 
 def lambda_handler(event, context):
+    nodeId = event.get('nodeId')
     rowId = event.get('rowId')
     temp = event.get('temp')
     flame = event.get('flame')
@@ -18,7 +19,7 @@ def lambda_handler(event, context):
     # get past records from supabase
     temp_hum_aq_res = None
     try:
-        temp_hum_aq_res = supabase.rpc("get_past_records", {"interval_string": f"{PAST_RECORDS_DURATION} minutes", }).execute()
+        temp_hum_aq_res = supabase.rpc("get_past_records", {"interval_string": f"{PAST_RECORDS_DURATION} minutes", "node_id":  nodeId}).execute()
     except Exception as e:
         print(f"Error getting past records supabase: {e}")
         
