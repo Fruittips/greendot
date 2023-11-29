@@ -139,20 +139,24 @@ async function validateAndPublishFireMessage(nodeId, fireProbability) {
     }
 
     //if fire is dying down
-    if (fireStatuses[nodeId] === 1 && fireProbability < fireProbabilityThreshold) {
-        if (noFireDurations[nodeId] === null) {
-            noFireDurations[nodeId] = new Date().getTime();
-        } else {
-            const currentTime = new Date().getTime();
-            const timeDiff = currentTime - noFireDurations[nodeId];
-            const timeDiffInMinutes = timeDiff / 60000;
+    if (fireStatuses[nodeId] === 1) {
+        if (fireProbability < fireProbabilityThreshold) {
+            if (noFireDurations[nodeId] === null) {
+                noFireDurations[nodeId] = new Date().getTime();
+            } else {
+                const currentTime = new Date().getTime();
+                const timeDiff = currentTime - noFireDurations[nodeId];
+                const timeDiffInMinutes = timeDiff / 60000;
 
-            // if status has been 0 for more than 5 minutes -> there is no more fire -> publish status 0
-            if (timeDiffInMinutes > 5) {
-                await updateAndPublishFireMessage(FLAME_PRESENCE_TOPIC, 0);
-                fireStatuses[nodeId] = 0;
-                noFireDurations[nodeId] = null;
+                // if status has been 0 for more than 5 minutes -> there is no more fire -> publish status 0
+                if (timeDiffInMinutes > 5) {
+                    await updateAndPublishFireMessage(FLAME_PRESENCE_TOPIC, 0);
+                    fireStatuses[nodeId] = 0;
+                    noFireDurations[nodeId] = null;
+                }
             }
+        } else {
+            noFireDurations[nodeId] = null;
         }
     }
 }
