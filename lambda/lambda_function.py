@@ -107,12 +107,12 @@ def get_air_quality_probability(air_quality_arr):
     if (len(air_quality_arr) == 0):
         return 0
     
-    # check if at least 10 hits above threshold
+    # check if at least 10 hits above threshold demo: 3 hits
     hits_above_threshold = 0
     for air_quality in air_quality_arr:
         if (air_quality > air_quality_threshold):
             hits_above_threshold += 1
-        if (hits_above_threshold >= 10):
+        if (hits_above_threshold >= 3):
             return 1
     return 0
 

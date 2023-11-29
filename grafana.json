@@ -25,7 +25,7 @@
         {
             "datasource": {
                 "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                "uid": "fdcddc6a-cd72-4e41-b7a7-3bbc5cccd401"
             },
             "fieldConfig": {
                 "defaults": {
@@ -107,8 +107,8 @@
                 ]
             },
             "gridPos": {
-                "h": 11,
-                "w": 12,
+                "h": 13,
+                "w": 24,
                 "x": 0,
                 "y": 0
             },
@@ -134,7 +134,7 @@
                     "editorMode": "code",
                     "format": "table",
                     "rawQuery": true,
-                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_0 FROM firecloud WHERE node_id = 0 order by\n  timestamp desc LIMIT 50 ",
+                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_0 FROM firecloud WHERE node_id = 0 order by\n  timestamp desc",
                     "refId": "Node 0 Probability",
                     "sql": {
                         "columns": [
@@ -197,7 +197,7 @@
                     "format": "table",
                     "hide": false,
                     "rawQuery": true,
-                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_1 FROM firecloud WHERE node_id = 1 order by\n  timestamp desc LIMIT 50 ",
+                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_1 FROM firecloud WHERE node_id = 1 order by\n  timestamp desc",
                     "refId": "Node 1 Probability",
                     "sql": {
                         "columns": [
@@ -256,12 +256,112 @@
             "type": "timeseries"
         },
         {
+            "datasource": {
+                "type": "postgres",
+                "uid": "fdcddc6a-cd72-4e41-b7a7-3bbc5cccd401"
+            },
+            "description": "Current Flame Sensor Value",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "match": "false",
+                                "result": {
+                                    "color": "green",
+                                    "index": 0,
+                                    "text": "Normal"
+                                }
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "options": {
+                                "match": "true",
+                                "result": {
+                                    "color": "red",
+                                    "index": 1,
+                                    "text": "High Alert"
+                                }
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 4,
+                "x": 1,
+                "y": 13
+            },
+            "id": 18,
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": ["lastNotNull"],
+                    "fields": "/^has_fire$/",
+                    "values": false
+                },
+                "textMode": "auto",
+                "wideLayout": true
+            },
+            "pluginVersion": "10.2.2",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "postgres",
+                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                    },
+                    "editorMode": "code",
+                    "format": "table",
+                    "rawQuery": true,
+                    "rawSql": "SELECT has_fire FROM fire_status WHERE id = 1",
+                    "refId": "A",
+                    "sql": {
+                        "columns": [
+                            {
+                                "parameters": [
+                                    {
+                                        "name": "has_fire",
+                                        "type": "functionParameter"
+                                    }
+                                ],
+                                "type": "function"
+                            }
+                        ],
+                        "groupBy": [],
+                        "limit": 50
+                    },
+                    "table": "fire_status"
+                }
+            ],
+            "title": "Alert Status",
+            "type": "stat"
+        },
+        {
             "collapsed": false,
             "gridPos": {
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 11
+                "y": 19
             },
             "id": 11,
             "panels": [],
@@ -269,10 +369,7 @@
             "type": "row"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -302,7 +399,7 @@
                 "h": 12,
                 "w": 8,
                 "x": 0,
-                "y": 12
+                "y": 20
             },
             "id": 12,
             "options": {
@@ -360,7 +457,7 @@
         {
             "datasource": {
                 "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                "uid": "fdcddc6a-cd72-4e41-b7a7-3bbc5cccd401"
             },
             "description": "Current Flame Sensor Value",
             "fieldConfig": {
@@ -401,7 +498,7 @@
                 "h": 6,
                 "w": 4,
                 "x": 8,
-                "y": 12
+                "y": 20
             },
             "id": 5,
             "options": {
@@ -452,10 +549,7 @@
             "type": "stat"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "description": "Current Humidity Level",
             "fieldConfig": {
                 "defaults": {
@@ -491,7 +585,7 @@
                 "h": 6,
                 "w": 4,
                 "x": 12,
-                "y": 12
+                "y": 20
             },
             "id": 16,
             "options": {
@@ -542,10 +636,7 @@
             "type": "gauge"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -575,7 +666,7 @@
                 "h": 6,
                 "w": 4,
                 "x": 16,
-                "y": 12
+                "y": 20
             },
             "id": 17,
             "options": {
@@ -625,10 +716,7 @@
             "type": "gauge"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -663,9 +751,9 @@
             },
             "gridPos": {
                 "h": 6,
-                "w": 4,
+                "w": 5,
                 "x": 8,
-                "y": 18
+                "y": 26
             },
             "id": 14,
             "options": {
@@ -715,10 +803,7 @@
             "type": "gauge"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "description": "Current Presence of CO2 in Air (ppm)",
             "fieldConfig": {
                 "defaults": {
@@ -748,8 +833,8 @@
             "gridPos": {
                 "h": 6,
                 "w": 4,
-                "x": 12,
-                "y": 18
+                "x": 13,
+                "y": 26
             },
             "id": 15,
             "options": {
@@ -804,7 +889,7 @@
                 "h": 1,
                 "w": 24,
                 "x": 0,
-                "y": 24
+                "y": 32
             },
             "id": 1,
             "panels": [],
@@ -812,10 +897,7 @@
             "type": "row"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -845,7 +927,7 @@
                 "h": 12,
                 "w": 8,
                 "x": 0,
-                "y": 25
+                "y": 33
             },
             "id": 3,
             "options": {
@@ -901,10 +983,7 @@
             "type": "gauge"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "description": "Current Flame Sensor Value",
             "fieldConfig": {
                 "defaults": {
@@ -944,7 +1023,7 @@
                 "h": 6,
                 "w": 4,
                 "x": 8,
-                "y": 25
+                "y": 33
             },
             "id": 13,
             "options": {
@@ -995,10 +1074,7 @@
             "type": "stat"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "description": "Current Humidity Level",
             "fieldConfig": {
                 "defaults": {
@@ -1034,7 +1110,7 @@
                 "h": 6,
                 "w": 4,
                 "x": 12,
-                "y": 25
+                "y": 33
             },
             "id": 4,
             "options": {
@@ -1085,10 +1161,7 @@
             "type": "gauge"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -1118,7 +1191,7 @@
                 "h": 6,
                 "w": 4,
                 "x": 16,
-                "y": 25
+                "y": 33
             },
             "id": 2,
             "options": {
@@ -1168,10 +1241,7 @@
             "type": "gauge"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -1206,9 +1276,9 @@
             },
             "gridPos": {
                 "h": 6,
-                "w": 4,
+                "w": 5,
                 "x": 8,
-                "y": 31
+                "y": 39
             },
             "id": 7,
             "options": {
@@ -1258,10 +1328,7 @@
             "type": "gauge"
         },
         {
-            "datasource": {
-                "type": "postgres",
-                "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-            },
+            "datasource": {},
             "description": "Current Presence of CO2 in Air (ppm)",
             "fieldConfig": {
                 "defaults": {
@@ -1291,8 +1358,8 @@
             "gridPos": {
                 "h": 6,
                 "w": 4,
-                "x": 12,
-                "y": 31
+                "x": 13,
+                "y": 39
             },
             "id": 6,
             "options": {
@@ -1342,20 +1409,22 @@
             "type": "gauge"
         }
     ],
-    "refresh": false,
+    "refresh": "5s",
     "schemaVersion": 38,
     "tags": [],
     "templating": {
         "list": []
     },
     "time": {
-        "from": "2023-11-27T12:15:23.454Z",
-        "to": "2023-11-27T12:19:27.019Z"
+        "from": "now-15m",
+        "to": "now"
     },
-    "timepicker": {},
+    "timepicker": {
+        "refresh_intervals": ["5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    },
     "timezone": "",
     "title": "GreenDot Dashboard",
     "uid": "f3bbb846-51ad-47ed-b928-40d06727f5ad",
-    "version": 32,
+    "version": 23,
     "weekStart": ""
 }
