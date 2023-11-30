@@ -138,7 +138,7 @@ async function validateAndPublishFireMessage(nodeId, fireProbability) {
         fireStatuses[nodeId] = 1;
     }
 
-    //if fire is dying down
+    //if fire is dying down aa
     if (fireStatuses[nodeId] === 1) {
         if (fireProbability < fireProbabilityThreshold) {
             if (noFireDurations[nodeId] === null) {
