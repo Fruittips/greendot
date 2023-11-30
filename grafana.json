@@ -1,21 +1,20 @@
 {
     "annotations": {
-        "list": [
-            {
-                "builtIn": 1,
-                "datasource": {
-                    "type": "grafana",
-                    "uid": "-- Grafana --"
-                },
-                "enable": true,
-                "hide": true,
-                "iconColor": "rgba(0, 211, 255, 1)",
-                "name": "Annotations & Alerts",
-                "type": "dashboard"
-            }
-        ]
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
     },
-    
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
@@ -23,1409 +22,1708 @@
     "links": [],
     "liveNow": false,
     "panels": [
-        {
+      {
+        "datasource": {
+          "type": "postgres",
+          "uid": "a3731ca4-d7a0-48a5-874c-78a688cd93a5"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "node_0"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Node 0"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "node_1"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Node 1"
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 13,
+          "w": 16,
+          "x": 0,
+          "y": 0
+        },
+        "id": 9,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "targets": [
+          {
             "datasource": {
-                "type": "postgres",
-                "uid": "fdcddc6a-cd72-4e41-b7a7-3bbc5cccd401"
+              "type": "postgres",
+              "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
             },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisBorderShow": false,
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "insertNulls": false,
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    }
-                },
-                "overrides": [
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "node_0"
-                        },
-                        "properties": [
-                            {
-                                "id": "displayName",
-                                "value": "Node 0"
-                            }
-                        ]
-                    },
-                    {
-                        "matcher": {
-                            "id": "byName",
-                            "options": "node_1"
-                        },
-                        "properties": [
-                            {
-                                "id": "displayName",
-                                "value": "Node 1"
-                            }
-                        ]
-                    }
-                ]
-            },
-            "gridPos": {
-                "h": 13,
-                "w": 24,
-                "x": 0,
-                "y": 0
-            },
-            "id": 9,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "targets": [
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT \"timestamp\", fire_probability AS node_0 FROM firecloud WHERE node_id = 0 order by\n  timestamp desc",
+            "refId": "Node 0 Probability",
+            "sql": {
+              "columns": [
                 {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_0 FROM firecloud WHERE node_id = 0 order by\n  timestamp desc",
-                    "refId": "Node 0 Probability",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [
-                                    {
-                                        "name": "\"timestamp\"",
-                                        "type": "functionParameter"
-                                    }
-                                ],
-                                "type": "function"
-                            },
-                            {
-                                "parameters": [
-                                    {
-                                        "name": "fire_probability",
-                                        "type": "functionParameter"
-                                    }
-                                ],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50,
-                        "whereJsonTree": {
-                            "children1": [
-                                {
-                                    "id": "8989ba8a-89ab-4cde-b012-318c10ba722f",
-                                    "properties": {
-                                        "field": "node_id",
-                                        "fieldSrc": "field",
-                                        "operator": "equal",
-                                        "value": [0],
-                                        "valueSrc": ["value"],
-                                        "valueType": ["number"]
-                                    },
-                                    "type": "rule"
-                                }
-                            ],
-                            "id": "8aa8aab9-89ab-4cde-b012-318c10b67cbe",
-                            "type": "group"
-                        },
-                        "whereString": "node_id = 0"
-                    },
-                    "table": "firecloud"
+                  "parameters": [
+                    {
+                      "name": "\"timestamp\"",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
                 },
                 {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "hide": false,
-                    "rawQuery": true,
-                    "rawSql": "SELECT \"timestamp\", fire_probability AS node_1 FROM firecloud WHERE node_id = 1 order by\n  timestamp desc",
-                    "refId": "Node 1 Probability",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [
-                                    {
-                                        "name": "\"timestamp\"",
-                                        "type": "functionParameter"
-                                    }
-                                ],
-                                "type": "function"
-                            },
-                            {
-                                "parameters": [
-                                    {
-                                        "name": "fire_probability",
-                                        "type": "functionParameter"
-                                    }
-                                ],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50,
-                        "whereJsonTree": {
-                            "children1": [
-                                {
-                                    "id": "ba8889ab-cdef-4012-b456-718c10be5f72",
-                                    "properties": {
-                                        "field": "node_id",
-                                        "fieldSrc": "field",
-                                        "operator": "equal",
-                                        "value": [1],
-                                        "valueSrc": ["value"],
-                                        "valueType": ["number"]
-                                    },
-                                    "type": "rule"
-                                }
-                            ],
-                            "id": "8aa8aab9-89ab-4cde-b012-318c10b67cbe",
-                            "type": "group"
-                        },
-                        "whereString": "node_id = 1"
-                    },
-                    "table": "firecloud"
+                  "parameters": [
+                    {
+                      "name": "fire_probability",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
                 }
-            ],
-            "title": "Probability",
-            "type": "timeseries"
-        },
-        {
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "8989ba8a-89ab-4cde-b012-318c10ba722f",
+                    "properties": {
+                      "field": "node_id",
+                      "fieldSrc": "field",
+                      "operator": "equal",
+                      "value": [
+                        0
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "number"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8aa8aab9-89ab-4cde-b012-318c10b67cbe",
+                "type": "group"
+              },
+              "whereString": "node_id = 0"
+            },
+            "table": "firecloud"
+          },
+          {
             "datasource": {
-                "type": "postgres",
-                "uid": "fdcddc6a-cd72-4e41-b7a7-3bbc5cccd401"
+              "type": "postgres",
+              "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
             },
-            "description": "Current Flame Sensor Value",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [
-                        {
-                            "options": {
-                                "match": "false",
-                                "result": {
-                                    "color": "green",
-                                    "index": 0,
-                                    "text": "Normal"
-                                }
-                            },
-                            "type": "special"
-                        },
-                        {
-                            "options": {
-                                "match": "true",
-                                "result": {
-                                    "color": "red",
-                                    "index": 1,
-                                    "text": "High Alert"
-                                }
-                            },
-                            "type": "special"
-                        }
-                    ],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 1,
-                "y": 13
-            },
-            "id": 18,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "/^has_fire$/",
-                    "values": false
-                },
-                "textMode": "auto",
-                "wideLayout": true
-            },
-            "pluginVersion": "10.2.2",
-            "targets": [
+            "editorMode": "code",
+            "format": "table",
+            "hide": false,
+            "rawQuery": true,
+            "rawSql": "SELECT \"timestamp\", fire_probability AS node_1 FROM firecloud WHERE node_id = 1 order by\n  timestamp desc",
+            "refId": "Node 1 Probability",
+            "sql": {
+              "columns": [
                 {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "SELECT has_fire FROM fire_status WHERE id = 1",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [
-                                    {
-                                        "name": "has_fire",
-                                        "type": "functionParameter"
-                                    }
-                                ],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [],
-                        "limit": 50
-                    },
-                    "table": "fire_status"
+                  "parameters": [
+                    {
+                      "name": "\"timestamp\"",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                },
+                {
+                  "parameters": [
+                    {
+                      "name": "fire_probability",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
                 }
-            ],
-            "title": "Alert Status",
-            "type": "stat"
-        },
-        {
-            "collapsed": false,
-            "gridPos": {
-                "h": 1,
-                "w": 24,
-                "x": 0,
-                "y": 19
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50,
+              "whereJsonTree": {
+                "children1": [
+                  {
+                    "id": "ba8889ab-cdef-4012-b456-718c10be5f72",
+                    "properties": {
+                      "field": "node_id",
+                      "fieldSrc": "field",
+                      "operator": "equal",
+                      "value": [
+                        1
+                      ],
+                      "valueSrc": [
+                        "value"
+                      ],
+                      "valueType": [
+                        "number"
+                      ]
+                    },
+                    "type": "rule"
+                  }
+                ],
+                "id": "8aa8aab9-89ab-4cde-b012-318c10b67cbe",
+                "type": "group"
+              },
+              "whereString": "node_id = 1"
             },
-            "id": 11,
-            "panels": [],
-            "title": "Node 1",
-            "type": "row"
+            "table": "firecloud"
+          }
+        ],
+        "title": "Probability",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {},
+        "description": "Current Flame Sensor Value",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [
+              {
+                "options": {
+                  "match": "false",
+                  "result": {
+                    "color": "green",
+                    "index": 0,
+                    "text": "Normal"
+                  }
+                },
+                "type": "special"
+              },
+              {
+                "options": {
+                  "match": "true",
+                  "result": {
+                    "color": "red",
+                    "index": 1,
+                    "text": "High Alert"
+                  }
+                },
+                "type": "special"
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "overrides": []
         },
-        {
+        "gridPos": {
+          "h": 6,
+          "w": 8,
+          "x": 16,
+          "y": 0
+        },
+        "id": 18,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "/^has_fire$/",
+            "values": false
+          },
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "postgres",
+              "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT has_fire FROM fire_status WHERE id = 1",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [
+                    {
+                      "name": "has_fire",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [],
+              "limit": 50
+            },
+            "table": "fire_status"
+          }
+        ],
+        "title": "Alert Status",
+        "type": "stat"
+      },
+      {
+        "datasource": {},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [
+              {
+                "options": {
+                  "0.3": {
+                    "color": "yellow",
+                    "index": 0,
+                    "text": "Fire Warning"
+                  }
+                },
+                "type": "value"
+              },
+              {
+                "options": {
+                  "from": 0.3009,
+                  "result": {
+                    "color": "red",
+                    "index": 1,
+                    "text": "Fire Detected!"
+                  },
+                  "to": 1
+                },
+                "type": "range"
+              }
+            ],
+            "max": 1,
+            "min": 0,
+            "noValue": "null",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 0.3
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 4,
+          "x": 16,
+          "y": 6
+        },
+        "id": 20,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "postgres",
+              "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nwhere\n  node_id = 1\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [
+                    {
+                      "name": "has_fire",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            },
+            "table": "fire_status"
+          }
+        ],
+        "title": "Probability of Fire (Node 1)",
+        "type": "gauge"
+      },
+      {
+        "datasource": {},
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [
+              {
+                "options": {
+                  "0.3": {
+                    "color": "yellow",
+                    "index": 0,
+                    "text": "Fire Warning"
+                  }
+                },
+                "type": "value"
+              },
+              {
+                "options": {
+                  "from": 0.3009,
+                  "result": {
+                    "color": "red",
+                    "index": 1,
+                    "text": "Fire Detected"
+                  },
+                  "to": 1
+                },
+                "type": "range"
+              }
+            ],
+            "max": 1,
+            "min": 0,
+            "noValue": "null",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 0.3
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 7,
+          "w": 4,
+          "x": 20,
+          "y": 6
+        },
+        "id": 19,
+        "options": {
+          "minVizHeight": 75,
+          "minVizWidth": 75,
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "pluginVersion": "10.2.2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "postgres",
+              "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nwhere\n  node_id = 0\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [
+                    {
+                      "name": "has_fire",
+                      "type": "functionParameter"
+                    }
+                  ],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            },
+            "table": "fire_status"
+          }
+        ],
+        "title": "Probability of Fire (Node 0)",
+        "type": "gauge"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 13
+        },
+        "id": 11,
+        "panels": [
+          {
             "datasource": {},
             "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "max": 1,
-                    "min": 0,
-                    "noValue": "null",
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 0.3
-                            }
-                        ]
-                    }
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
                 },
-                "overrides": []
+                "mappings": [
+                  {
+                    "options": {
+                      "0.3": {
+                        "color": "yellow",
+                        "index": 0,
+                        "text": "Fire Warning"
+                      }
+                    },
+                    "type": "value"
+                  },
+                  {
+                    "options": {
+                      "from": 0.3009,
+                      "result": {
+                        "color": "red",
+                        "index": 1,
+                        "text": "Fire Detected!"
+                      },
+                      "to": 1
+                    },
+                    "type": "range"
+                  }
+                ],
+                "max": 1,
+                "min": 0,
+                "noValue": "null",
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.3
+                    }
+                  ]
+                }
+              },
+              "overrides": []
             },
             "gridPos": {
-                "h": 12,
-                "w": 8,
-                "x": 0,
-                "y": 20
+              "h": 12,
+              "w": 8,
+              "x": 0,
+              "y": 26
             },
             "id": 12,
             "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": true,
-                "showThresholdMarkers": true
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": true,
+              "showThresholdMarkers": true
             },
             "pluginVersion": "10.2.2",
             "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nwhere\n  node_id = 1\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [
-                                    {
-                                        "name": "has_fire",
-                                        "type": "functionParameter"
-                                    }
-                                ],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
-                    },
-                    "table": "fire_status"
-                }
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nwhere\n  node_id = 1\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [
+                        {
+                          "name": "has_fire",
+                          "type": "functionParameter"
+                        }
+                      ],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                },
+                "table": "fire_status"
+              }
             ],
             "title": "Probability of Fire",
             "type": "gauge"
-        },
-        {
-            "datasource": {
-                "type": "postgres",
-                "uid": "fdcddc6a-cd72-4e41-b7a7-3bbc5cccd401"
-            },
+          },
+          {
+            "datasource": {},
             "description": "Current Flame Sensor Value",
             "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [
-                        {
-                            "options": {
-                                "0": {
-                                    "color": "green",
-                                    "index": 0,
-                                    "text": "No Flame"
-                                },
-                                "1": {
-                                    "color": "red",
-                                    "index": 1,
-                                    "text": "Flame Detected"
-                                }
-                            },
-                            "type": "value"
-                        }
-                    ],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            }
-                        ]
-                    }
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
                 },
-                "overrides": []
+                "mappings": [
+                  {
+                    "options": {
+                      "0": {
+                        "color": "green",
+                        "index": 0,
+                        "text": "No Flame"
+                      },
+                      "1": {
+                        "color": "red",
+                        "index": 1,
+                        "text": "Flame Detected"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
             },
             "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 8,
-                "y": 20
+              "h": 6,
+              "w": 4,
+              "x": 10,
+              "y": 26
             },
             "id": 5,
             "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "textMode": "auto",
-                "wideLayout": true
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "textMode": "auto",
+              "wideLayout": true
             },
             "pluginVersion": "10.2.2",
             "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  flame_sensor_value\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  flame_sensor_value\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
                     }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
                 }
+              }
             ],
             "title": "Flame Sensor",
             "type": "stat"
-        },
-        {
-            "datasource": {},
-            "description": "Current Humidity Level",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "fieldMinMax": false,
-                    "mappings": [],
-                    "max": 100,
-                    "min": 0,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "red",
-                                "value": null
-                            },
-                            {
-                                "color": "#EAB839",
-                                "value": 40
-                            },
-                            {
-                                "color": "green",
-                                "value": 65
-                            }
-                        ]
-                    },
-                    "unit": "humidity"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 12,
-                "y": 20
-            },
-            "id": 16,
-            "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-            },
-            "pluginVersion": "10.2.2",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  humidity\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
-                    },
-                    "table": "firecloud"
-                }
-            ],
-            "title": "Humidity",
-            "type": "gauge"
-        },
-        {
-            "datasource": {},
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "max": 43,
-                    "min": 15,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 39
-                            }
-                        ]
-                    },
-                    "unit": "celsius"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 16,
-                "y": 20
-            },
-            "id": 17,
-            "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-            },
-            "pluginVersion": "10.2.2",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  temperature\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
-                    }
-                }
-            ],
-            "title": "Temperature",
-            "type": "gauge"
-        },
-        {
-            "datasource": {},
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "max": 1,
-                    "min": -1.5,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "green",
-                                "value": -1.18
-                            },
-                            {
-                                "color": "red",
-                                "value": -0.89
-                            },
-                            {
-                                "color": "green",
-                                "value": -0.6
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 5,
-                "x": 8,
-                "y": 26
-            },
-            "id": 14,
-            "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-            },
-            "pluginVersion": "10.2.2",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  r_value\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
-                    }
-                }
-            ],
-            "title": "Temperature & Humidity R-value",
-            "type": "gauge"
-        },
-        {
+          },
+          {
             "datasource": {},
             "description": "Current Presence of CO2 in Air (ppm)",
             "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "max": 547,
-                    "min": 10,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 350
-                            }
-                        ]
-                    },
-                    "unit": "ppm"
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
                 },
-                "overrides": []
+                "mappings": [],
+                "max": 547,
+                "min": 10,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 350
+                    }
+                  ]
+                },
+                "unit": "ppm"
+              },
+              "overrides": []
             },
             "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 13,
-                "y": 26
+              "h": 6,
+              "w": 4,
+              "x": 14,
+              "y": 26
             },
             "id": 15,
             "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
             },
             "pluginVersion": "10.2.2",
             "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  air_quality_ppm\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  air_quality_ppm\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
                     }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
                 }
+              }
             ],
             "title": "Air Quality Sensor",
             "type": "gauge"
-        },
-        {
-            "collapsed": false,
-            "gridPos": {
-                "h": 1,
-                "w": 24,
-                "x": 0,
-                "y": 32
-            },
-            "id": 1,
-            "panels": [],
-            "title": "Node 0",
-            "type": "row"
-        },
-        {
+          },
+          {
             "datasource": {},
             "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "max": 1,
-                    "min": 0,
-                    "noValue": "null",
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 0.3
-                            }
-                        ]
-                    }
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
                 },
-                "overrides": []
+                "mappings": [],
+                "max": 43,
+                "min": 15,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 39
+                    }
+                  ]
+                },
+                "unit": "celsius"
+              },
+              "overrides": []
             },
             "gridPos": {
-                "h": 12,
-                "w": 8,
-                "x": 0,
-                "y": 33
+              "h": 6,
+              "w": 4,
+              "x": 8,
+              "y": 32
             },
-            "id": 3,
+            "id": 17,
             "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": true,
-                "showThresholdMarkers": true
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
             },
             "pluginVersion": "10.2.2",
             "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nwhere\n  node_id = 0\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [
-                                    {
-                                        "name": "has_fire",
-                                        "type": "functionParameter"
-                                    }
-                                ],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
-                    },
-                    "table": "fire_status"
-                }
-            ],
-            "title": "Probability of Fire",
-            "type": "gauge"
-        },
-        {
-            "datasource": {},
-            "description": "Current Flame Sensor Value",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [
-                        {
-                            "options": {
-                                "0": {
-                                    "color": "green",
-                                    "index": 0,
-                                    "text": "No Flame"
-                                },
-                                "1": {
-                                    "color": "red",
-                                    "index": 1,
-                                    "text": "Flame Detected"
-                                }
-                            },
-                            "type": "value"
-                        }
-                    ],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            }
-                        ]
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  temperature\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
                     }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 8,
-                "y": 33
-            },
-            "id": 13,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "textMode": "auto",
-                "wideLayout": true
-            },
-            "pluginVersion": "10.2.2",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  flame_sensor_value\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
                     }
+                  ],
+                  "limit": 50
                 }
-            ],
-            "title": "Flame Sensor",
-            "type": "stat"
-        },
-        {
-            "datasource": {},
-            "description": "Current Humidity Level",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "fieldMinMax": false,
-                    "mappings": [],
-                    "max": 100,
-                    "min": 0,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "red",
-                                "value": null
-                            },
-                            {
-                                "color": "#EAB839",
-                                "value": 40
-                            },
-                            {
-                                "color": "green",
-                                "value": 65
-                            }
-                        ]
-                    },
-                    "unit": "humidity"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 12,
-                "y": 33
-            },
-            "id": 4,
-            "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-            },
-            "pluginVersion": "10.2.2",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  humidity\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
-                    },
-                    "table": "firecloud"
-                }
-            ],
-            "title": "Humidity",
-            "type": "gauge"
-        },
-        {
-            "datasource": {},
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "max": 43,
-                    "min": 15,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 39
-                            }
-                        ]
-                    },
-                    "unit": "celsius"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 16,
-                "y": 33
-            },
-            "id": 2,
-            "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
-            },
-            "pluginVersion": "10.2.2",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  temperature\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
-                    }
-                }
+              }
             ],
             "title": "Temperature",
             "type": "gauge"
-        },
-        {
+          },
+          {
             "datasource": {},
             "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "max": 1,
-                    "min": -1.5,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "green",
-                                "value": -1.18
-                            },
-                            {
-                                "color": "red",
-                                "value": -0.89
-                            },
-                            {
-                                "color": "green",
-                                "value": -0.6
-                            }
-                        ]
-                    }
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
                 },
-                "overrides": []
+                "mappings": [],
+                "max": 1,
+                "min": -1.5,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "green",
+                      "value": -1.18
+                    },
+                    {
+                      "color": "red",
+                      "value": -0.89
+                    },
+                    {
+                      "color": "green",
+                      "value": -0.6
+                    }
+                  ]
+                }
+              },
+              "overrides": []
             },
             "gridPos": {
-                "h": 6,
-                "w": 5,
-                "x": 8,
-                "y": 39
+              "h": 6,
+              "w": 4,
+              "x": 12,
+              "y": 32
             },
-            "id": 7,
+            "id": 14,
             "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
             },
             "pluginVersion": "10.2.2",
             "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  r_value\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  r_value\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
                     }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
                 }
+              }
             ],
             "title": "Temperature & Humidity R-value",
             "type": "gauge"
-        },
-        {
+          },
+          {
             "datasource": {},
-            "description": "Current Presence of CO2 in Air (ppm)",
+            "description": "Current Humidity Level",
             "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "max": 547,
-                    "min": 10,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 350
-                            }
-                        ]
-                    },
-                    "unit": "ppm"
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
                 },
-                "overrides": []
+                "fieldMinMax": false,
+                "mappings": [],
+                "max": 100,
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red"
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 40
+                    },
+                    {
+                      "color": "green",
+                      "value": 65
+                    }
+                  ]
+                },
+                "unit": "humidity"
+              },
+              "overrides": []
             },
             "gridPos": {
-                "h": 6,
-                "w": 4,
-                "x": 13,
-                "y": 39
+              "h": 6,
+              "w": 4,
+              "x": 16,
+              "y": 32
             },
-            "id": 6,
+            "id": 16,
             "options": {
-                "minVizHeight": 75,
-                "minVizWidth": 75,
-                "orientation": "auto",
-                "reduceOptions": {
-                    "calcs": ["lastNotNull"],
-                    "fields": "",
-                    "values": false
-                },
-                "showThresholdLabels": false,
-                "showThresholdMarkers": true
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
             },
             "pluginVersion": "10.2.2",
             "targets": [
-                {
-                    "datasource": {
-                        "type": "postgres",
-                        "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
-                    },
-                    "editorMode": "code",
-                    "format": "table",
-                    "rawQuery": true,
-                    "rawSql": "select\n  air_quality_ppm\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
-                    "refId": "A",
-                    "sql": {
-                        "columns": [
-                            {
-                                "parameters": [],
-                                "type": "function"
-                            }
-                        ],
-                        "groupBy": [
-                            {
-                                "property": {
-                                    "type": "string"
-                                },
-                                "type": "groupBy"
-                            }
-                        ],
-                        "limit": 50
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  humidity\nfrom\n  firecloud\nwhere\n  node_id = 1\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
                     }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                },
+                "table": "firecloud"
+              }
+            ],
+            "title": "Humidity",
+            "type": "gauge"
+          }
+        ],
+        "title": "Node 1",
+        "type": "row"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 14
+        },
+        "id": 1,
+        "panels": [
+          {
+            "datasource": {},
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "mappings": [
+                  {
+                    "options": {
+                      "0.3": {
+                        "color": "yellow",
+                        "index": 0,
+                        "text": "Fire Warning"
+                      }
+                    },
+                    "type": "value"
+                  },
+                  {
+                    "options": {
+                      "from": 0.3009,
+                      "result": {
+                        "color": "red",
+                        "index": 1,
+                        "text": "Fire Detected"
+                      },
+                      "to": 1
+                    },
+                    "type": "range"
+                  }
+                ],
+                "max": 1,
+                "min": 0,
+                "noValue": "null",
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.3
+                    }
+                  ]
                 }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 12,
+              "w": 8,
+              "x": 0,
+              "y": 27
+            },
+            "id": 3,
+            "options": {
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": true,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.2.2",
+            "targets": [
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "SELECT\n  fire_probability,\n  timestamp\nFROM\n  firecloud\nwhere\n  node_id = 0\nORDER BY\n  timestamp DESC\nLIMIT\n  1\n",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [
+                        {
+                          "name": "has_fire",
+                          "type": "functionParameter"
+                        }
+                      ],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                },
+                "table": "fire_status"
+              }
+            ],
+            "title": "Probability of Fire",
+            "type": "gauge"
+          },
+          {
+            "datasource": {},
+            "description": "Current Flame Sensor Value",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "mappings": [
+                  {
+                    "options": {
+                      "0": {
+                        "color": "green",
+                        "index": 0,
+                        "text": "No Flame"
+                      },
+                      "1": {
+                        "color": "red",
+                        "index": 1,
+                        "text": "Flame Detected"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 10,
+              "y": 27
+            },
+            "id": 13,
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "auto",
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "textMode": "auto",
+              "wideLayout": true
+            },
+            "pluginVersion": "10.2.2",
+            "targets": [
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  flame_sensor_value\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                }
+              }
+            ],
+            "title": "Flame Sensor",
+            "type": "stat"
+          },
+          {
+            "datasource": {},
+            "description": "Current Presence of CO2 in Air (ppm)",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "mappings": [],
+                "max": 547,
+                "min": 10,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 350
+                    }
+                  ]
+                },
+                "unit": "ppm"
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 14,
+              "y": 27
+            },
+            "id": 6,
+            "options": {
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.2.2",
+            "targets": [
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  air_quality_ppm\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                }
+              }
             ],
             "title": "Air Quality Sensor",
             "type": "gauge"
-        }
+          },
+          {
+            "datasource": {},
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "mappings": [],
+                "max": 43,
+                "min": 15,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": 39
+                    }
+                  ]
+                },
+                "unit": "celsius"
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 8,
+              "y": 33
+            },
+            "id": 2,
+            "options": {
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.2.2",
+            "targets": [
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  temperature\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                }
+              }
+            ],
+            "title": "Temperature",
+            "type": "gauge"
+          },
+          {
+            "datasource": {},
+            "description": "Current Humidity Level",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "fieldMinMax": false,
+                "mappings": [],
+                "max": 100,
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red"
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 40
+                    },
+                    {
+                      "color": "green",
+                      "value": 65
+                    }
+                  ]
+                },
+                "unit": "humidity"
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 12,
+              "y": 33
+            },
+            "id": 4,
+            "options": {
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.2.2",
+            "targets": [
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  humidity\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                },
+                "table": "firecloud"
+              }
+            ],
+            "title": "Humidity",
+            "type": "gauge"
+          },
+          {
+            "datasource": {},
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "mappings": [],
+                "max": 1,
+                "min": -1.5,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "green",
+                      "value": -1.18
+                    },
+                    {
+                      "color": "red",
+                      "value": -0.89
+                    },
+                    {
+                      "color": "green",
+                      "value": -0.6
+                    }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": {
+              "h": 6,
+              "w": 4,
+              "x": 16,
+              "y": 33
+            },
+            "id": 7,
+            "options": {
+              "minVizHeight": 75,
+              "minVizWidth": 75,
+              "orientation": "auto",
+              "reduceOptions": {
+                "calcs": [
+                  "lastNotNull"
+                ],
+                "fields": "",
+                "values": false
+              },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.2.2",
+            "targets": [
+              {
+                "datasource": {
+                  "type": "postgres",
+                  "uid": "b5236ea3-0347-4e2b-a627-0fbbe68b1304"
+                },
+                "editorMode": "code",
+                "format": "table",
+                "rawQuery": true,
+                "rawSql": "select\n  r_value\nfrom\n  firecloud\nwhere\n  node_id = 0\norder by\n  timestamp desc\nlimit\n  1;",
+                "refId": "A",
+                "sql": {
+                  "columns": [
+                    {
+                      "parameters": [],
+                      "type": "function"
+                    }
+                  ],
+                  "groupBy": [
+                    {
+                      "property": {
+                        "type": "string"
+                      },
+                      "type": "groupBy"
+                    }
+                  ],
+                  "limit": 50
+                }
+              }
+            ],
+            "title": "Temperature & Humidity R-value",
+            "type": "gauge"
+          }
+        ],
+        "title": "Node 0",
+        "type": "row"
+      }
     ],
     "refresh": "5s",
     "schemaVersion": 38,
     "tags": [],
     "templating": {
-        "list": []
+      "list": []
     },
     "time": {
-        "from": "now-15m",
-        "to": "now"
+      "from": "now-15m",
+      "to": "now"
     },
     "timepicker": {
-        "refresh_intervals": ["5s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+      "refresh_intervals": [
+        "5s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
     },
     "timezone": "",
     "title": "GreenDot Dashboard",
     "uid": "f3bbb846-51ad-47ed-b928-40d06727f5ad",
-    "version": 23,
+    "version": 12,
     "weekStart": ""
-}
+  }
