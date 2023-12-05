@@ -25,26 +25,34 @@ This contains code for sampling of raw data for the sensors attached to the ESP3
 
 from the root directory `cd/rpi` and run:
 ```
-pip install -r requirements.txt
+sudo bash setup.sh
 sudo bash run.sh
 ```
-
+### Firecloud (Main server)
+```
+cd fire-cloud
+docker compose up
+```
 ## File structure
+### `./.github`
+Github action workflow scripts. Contains the following files:
 
-### ```analytics-py```
-Our analytics service runs on a serverless lambda function using python. 
+1. `./.github/workflows/deploy-prod.yml` 
+    - This script is triggered when a push is made to the prod branch. It will build the docker image and push it to AWS ECR. It will then deploy the docker image to AWS Elastic Beanstalk (EBS).
+2. `./.github/workflows/deploy-lambda-prod.yml`
+    - This script is triggered when a push is made to the prod-lambda branch. It will build the docker image and push it to AWS ECR. It will then deploy the docker image to AWS Lambda.
 
-### ```fire-cloud```
+### `./fire-cloud`
 Contains the central server code that will run on Elastic Beanstalk (EBS). The central server runs on NodeJS and is subscribed to our MQTT broker. Upon receiving sensor data that was published to our MQTT broker, it directs it to both our database and lambda function.
 
-### ```lambda```
+### `./lambda`
 Our analytics service runs on a serverless lambda function using python. It is responsible for calculating the probability of fire and updating it to our database.
 
-### ```rpi```
+### `./rpi`
 Acts as the central node for our system. It establishes persistent Bluetooth Low Energy (BLE) connection with all ESP32 child nodes, gathers data and publishes it to the MQTT broker.
 
-### ```sensors```
+### `./sensors`
 The `/lib` folder contains all necessary files needed to read data from the sensors used with micropython.
 
-### ```node.py``` and ```sensors.py```
+### `./node.py` and `./sensors.py`
 Used by the ESP32s to allow persistent Bluetooth Low Energy (BLE) connection with the central node (RPi), gather data from sensors and transmit data to the central node.
