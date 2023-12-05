@@ -26,7 +26,7 @@ This contains code for sampling of raw data for the sensors attached to the ESP3
 from the root directory `cd/rpi` and run:
 ```
 pip install -r requirements.txt
-bash run.sh
+sudo bash run.sh
 ```
 
 ## File structure
