@@ -8,18 +8,20 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-PAST_RECORDS_DURATION = 3 # in minutes TODO: change such that we can sample >= 25 past records (e.g. sampling interval * 25)
 
 def lambda_handler(event, context):
     nodeId = event.get('nodeId')
     rowId = event.get('rowId')
     temp = event.get('temp')
     flame = event.get('flame')
+    utc_datatime = event.get('utc_datetime_string')
     
     # get past records from supabase
     temp_hum_aq_res = None
     try:
-        temp_hum_aq_res = supabase.rpc("get_past_records", {"interval_string": f"{PAST_RECORDS_DURATION} minutes", "node_id":  nodeId}).execute()
+        temp_hum_aq_res = supabase.rpc("get_past_records", {
+            "node_id":  nodeId, 
+            "utc_datetime_string": utc_datatime}).execute()
     except Exception as e:
         print(f"Error getting past records supabase: {e}")
         
@@ -36,7 +38,7 @@ def lambda_handler(event, context):
     humidity_arr = [] if temp_hum_aq_data.get("all_humidity", None) is None else temp_hum_aq_data.get("all_humidity")
     aq_arr = [] if temp_hum_aq_data.get("all_air_quality_ppm", None) is None else temp_hum_aq_data.get("all_air_quality_ppm")
     
-    r_value = None
+    r_value = 0
     fire_probability = 0
     
     if len(temp_arr) >= 25 and len(humidity_arr) >= 25:
@@ -66,10 +68,8 @@ def lambda_handler(event, context):
             })
         }
 
-    if len(aq_arr) != 0 and r_value != None:
-        fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
+    fire_probability = get_fire_probability(temp, aq_arr, flame, r_value)
     
-    # TODO: update row in supabase table with r_value and fire_probability
     try:
         supabase.table('firecloud') \
                     .update({
@@ -107,11 +107,14 @@ def get_air_quality_probability(air_quality_arr):
     if (len(air_quality_arr) == 0):
         return 0
     
-    # if every value in the array is above threshold, return 1
-    if (all(air_quality > air_quality_threshold for air_quality in air_quality_arr)):
-        return 1
-    else:
-        return 0
+    # check if at least 10 hits above threshold demo: 3 hits
+    hits_above_threshold = 0
+    for air_quality in air_quality_arr:
+        if (air_quality > air_quality_threshold):
+            hits_above_threshold += 1
+        if (hits_above_threshold >= 3):
+            return 1
+    return 0
 
 def get_temp_probability(temp):
     temp_threshold = 40 # highest in sg: 37 + 3 = 40 deg (3 for threshold)
@@ -133,17 +136,9 @@ def get_temp_humidity_probability(r_value):
         return r_ratio
 
 def get_r_value(temp_arr, humidity_arr): 
+    if np.std(temp_arr) == 0 or np.std(humidity_arr) == 0:
+        return 0
+    
     r_corrcoef = np.corrcoef(temp_arr, humidity_arr, rowvar=False)
     r_actual = r_corrcoef[0][1]
     return r_actual
-
-# # #TODO: DONT PUSH THIS REMOVE IT BEFORE PUSHING
-# if __name__ == "__main__":
-#     x = lambda_handler({
-#   "rowId": 646,
-#   "temp": 30.9,
-#   "humidity": 72.4,
-#   "flame": 0,
-#   "airQuality": 526.858
-# }, None)
-#     print(x)
