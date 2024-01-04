@@ -1,4 +1,4 @@
-name: Build, Push and Deploy Docker Image to Lambda
+name: Build, Push and Deploy Docker Image to Lambda 
 
 on:
   push:
